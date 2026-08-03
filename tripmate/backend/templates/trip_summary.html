@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Trip Summary{% endblock %}
+{% block content %}
+<div class="px-6 py-6 space-y-6 max-w-4xl mx-auto">
+  <div class="flex items-center gap-3">
+    <a href="{% url 'trip_detail' trip.id %}" class="p-2 rounded-xl border border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary transition-all"><span class="material-symbols-outlined text-[18px]">arrow_back</span></a>
+    <div><h2 class="text-2xl font-bold text-on-surface">Trip Summary</h2><p class="text-on-surface-variant text-sm">{{ trip.source }} → {{ trip.destination }}</p></div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="glass-panel p-4 rounded-2xl text-center"><p class="text-xs text-on-surface-variant">Duration</p><p class="text-2xl font-bold text-on-surface mt-1">{{ trip.duration_days }} days</p></div>
+    <div class="glass-panel p-4 rounded-2xl text-center"><p class="text-xs text-on-surface-variant">Budget</p><p class="text-2xl font-bold text-primary mt-1">₹{{ trip.budget|floatformat:0 }}</p></div>
+    <div class="glass-panel p-4 rounded-2xl text-center"><p class="text-xs text-on-surface-variant">Spent</p><p class="text-2xl font-bold text-error mt-1">₹{{ total_spent|floatformat:0 }}</p></div>
+    <div class="glass-panel p-4 rounded-2xl text-center"><p class="text-xs text-on-surface-variant">Savings</p><p class="text-2xl font-bold {% if savings >= 0 %}text-primary{% else %}text-error{% endif %} mt-1">₹{{ savings|floatformat:0 }}</p></div>
+  </div>
+
+  <!-- AI Summary + Chart -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="glass-panel rounded-2xl p-5">
+      <h3 class="font-bold text-on-surface mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary mat-filled">auto_awesome</span> AI Travel Summary</h3>
+      <button onclick="loadAiSummary()" id="gen-summary-btn" class="w-full py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold mb-4 hover:brightness-110 transition-all">Generate AI Summary</button>
+      <div id="ai-summary" class="text-sm text-on-surface-variant leading-relaxed whitespace-pre-line hidden"></div>
+    </div>
+    <div class="glass-panel rounded-2xl p-5">
+      <h3 class="font-bold text-on-surface mb-4">Spending Breakdown</h3>
+      {% if by_category and by_category != '{}' %}
+      <div class="h-48"><canvas id="expense-chart"></canvas></div>
+      {% else %}
+      <div class="text-center py-8 text-on-surface-variant"><span class="material-symbols-outlined text-3xl text-outline block mb-2">receipt_long</span><p class="text-sm">No expenses recorded</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Expenses List -->
+  {% if expenses %}
+  <div class="glass-panel rounded-2xl p-5">
+    <h3 class="font-bold text-on-surface mb-4">All Expenses</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="border-b border-outline-variant/50 text-xs text-on-surface-variant uppercase tracking-wider"><th class="text-left py-2 pb-3">Item</th><th class="text-left py-2">Category</th><th class="text-left py-2">Date</th><th class="text-right py-2">Amount</th></tr></thead>
+        <tbody>
+          {% for exp in expenses %}
+          <tr class="border-b border-outline-variant/30 hover:bg-surface-container/30 transition-all">
+            <td class="py-2.5 text-on-surface">{{ exp.title }}</td>
+            <td class="py-2.5 text-on-surface-variant capitalize">{{ exp.category }}</td>
+            <td class="py-2.5 text-on-surface-variant">{{ exp.date }}</td>
+            <td class="py-2.5 text-error text-right font-semibold">₹{{ exp.amount|floatformat:0 }}</td>
+          </tr>
+          {% endfor %}
+          <tr class="font-bold"><td colspan="3" class="pt-3 text-on-surface">Total</td><td class="pt-3 text-right text-error">₹{{ total_spent|floatformat:0 }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1]||'';
+{% if by_category and by_category != '{}' %}
+const catData = {{ by_category|safe }};
+const labels = Object.keys(catData);
+const values = Object.values(catData);
+const colors = ['#f97316','#3b82f6','#8b5cf6','#14b8a6','#ec4899','#6b7280','#eab308','#ef4444'];
+new Chart(document.getElementById('expense-chart').getContext('2d'),{
+  type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'#051426',borderWidth:3}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#bfc9c3',font:{size:11}}}},cutout:'65%'}
+});
+{% endif %}
+async function loadAiSummary() {
+  document.getElementById('gen-summary-btn').textContent = 'Generating...';
+  document.getElementById('gen-summary-btn').disabled = true;
+  const resp = await fetch('/api/trips/{{ trip.id }}/summary/',{headers:{'X-CSRFToken':CSRF}});
+  if(resp.ok){const d=await resp.json();document.getElementById('ai-summary').textContent=d.ai_summary;document.getElementById('ai-summary').classList.remove('hidden');document.getElementById('gen-summary-btn').classList.add('hidden');}
+  else{showToast('Failed to generate summary','error');document.getElementById('gen-summary-btn').disabled=false;document.getElementById('gen-summary-btn').textContent='Generate AI Summary';}
+}
+</script>
+{% endblock %}

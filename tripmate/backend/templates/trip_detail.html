@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% block title %}{{ trip.destination }} Details{% endblock %}
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <a href="{% url 'trips_page' %}" class="p-2 rounded-xl border border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary transition-all">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+      </a>
+      <div>
+        <h2 class="text-2xl font-bold text-on-surface">{{ trip.source }} → {{ trip.destination }}</h2>
+        <p class="text-on-surface-variant text-sm">{{ trip.start_date|date:"M d" }} – {{ trip.end_date|date:"M d, Y" }} · {{ trip.duration_days }} days</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <span class="px-3 py-1.5 rounded-xl text-xs font-semibold {% if trip.status == 'upcoming' %}bg-primary-container/30 text-primary{% elif trip.status == 'active' %}bg-tertiary-container/40 text-tertiary{% elif trip.status == 'completed' %}bg-surface-variant text-on-surface-variant{% else %}bg-secondary-container/40 text-secondary{% endif %}">
+        {{ trip.get_status_display }}
+      </span>
+      {% if trip.ai_generated %}
+      <span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-primary/10 text-primary flex items-center gap-1">
+        <span class="material-symbols-outlined text-[12px] mat-filled">auto_awesome</span> AI Generated
+      </span>
+      {% endif %}
+      <a href="{% url 'trip_summary' trip.id %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all">Trip Summary</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="glass-panel p-4 rounded-2xl text-center">
+      <span class="material-symbols-outlined text-primary text-2xl mat-filled">group</span>
+      <p class="text-xs text-on-surface-variant mt-1">Travelers</p>
+      <p class="text-xl font-bold text-on-surface">{{ trip.num_travelers }}</p>
+    </div>
+    <div class="glass-panel p-4 rounded-2xl text-center">
+      <span class="material-symbols-outlined text-primary text-2xl mat-filled">payments</span>
+      <p class="text-xs text-on-surface-variant mt-1">Budget</p>
+      <p class="text-lg font-bold text-primary">₹{{ trip.budget|floatformat:0 }}</p>
+    </div>
+    <div class="glass-panel p-4 rounded-2xl text-center">
+      <span class="material-symbols-outlined text-error text-2xl mat-filled">receipt_long</span>
+      <p class="text-xs text-on-surface-variant mt-1">Spent</p>
+      <p class="text-xl font-bold text-error">₹{{ total_spent|floatformat:0 }}</p>
+    </div>
+    {% if trip.distance_km %}
+    <div class="glass-panel p-4 rounded-2xl text-center">
+      <span class="material-symbols-outlined text-tertiary text-2xl mat-filled">distance</span>
+      <p class="text-xs text-on-surface-variant mt-1">Distance</p>
+      <p class="text-xl font-bold text-on-surface">{{ trip.distance_km }} km</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Main Content -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Itinerary -->
+    <div class="xl:col-span-2 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-on-surface">Day-wise Itinerary</h3>
+        {% if not itinerary %}
+        <button onclick="generateItinerary()" id="gen-btn" class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">
+          <span class="material-symbols-outlined text-[16px] mat-filled">auto_awesome</span> Generate AI Itinerary
+        </button>
+        {% endif %}
+      </div>
+
+      {% if itinerary %}
+        {% for day in itinerary.days_data %}
+        <div class="glass-panel rounded-2xl overflow-hidden">
+          <div class="p-4 border-b border-outline-variant/50 flex items-center gap-3 bg-surface-container/30">
+            <div class="w-9 h-9 bg-primary-container/40 rounded-xl flex items-center justify-center">
+              <span class="font-black text-primary">{{ day.day }}</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-on-surface">{{ day.theme }}</p>
+              <p class="text-xs text-on-surface-variant">{{ day.date }} {% if day.weather_note %}· {{ day.weather_note }}{% endif %}</p>
+            </div>
+            {% if day.estimated_cost %}<span class="text-sm font-bold text-primary">₹{{ day.estimated_cost }}</span>{% endif %}
+          </div>
+          <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {% for act in day.activities %}
+            <div class="bg-surface-container/40 rounded-xl p-3">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-semibold uppercase tracking-wider text-primary">{{ act.time_slot }}</span>
+                {% if act.estimated_cost %}<span class="ml-auto text-xs text-outline">₹{{ act.estimated_cost }}</span>{% endif %}
+              </div>
+              <p class="font-semibold text-on-surface text-sm">{{ act.name }}</p>
+              {% if act.location %}<p class="text-xs text-on-surface-variant mt-0.5">📍 {{ act.location }}</p>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="glass-panel rounded-2xl p-12 text-center">
+          <span class="material-symbols-outlined text-5xl text-outline mat-filled block mb-3">auto_awesome</span>
+          <p class="font-semibold text-on-surface">No itinerary yet</p>
+          <p class="text-xs text-on-surface-variant mt-1">Generate a personalized AI itinerary for this trip</p>
+        </div>
+      {% endif %}
+
+      <!-- Map -->
+      {% if route %}
+      <div class="glass-panel rounded-2xl overflow-hidden h-72">
+        <div id="trip-map" class="h-full w-full"></div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-4">
+      <!-- Trip Info -->
+      <div class="glass-panel rounded-2xl p-5 space-y-3">
+        <h4 class="font-bold text-on-surface">Trip Details</h4>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-on-surface-variant">Transport</span><span class="font-medium text-on-surface capitalize">{{ trip.get_transport_display }}</span></div>
+          <div class="flex justify-between"><span class="text-on-surface-variant">Travel Type</span><span class="font-medium text-on-surface capitalize">{{ trip.get_travel_type_display }}</span></div>
+          <div class="flex justify-between"><span class="text-on-surface-variant">Hotel Pref.</span><span class="font-medium text-on-surface capitalize">{{ trip.get_hotel_preference_display }}</span></div>
+          <div class="flex justify-between"><span class="text-on-surface-variant">Food Pref.</span><span class="font-medium text-on-surface capitalize">{{ trip.get_food_preference_display }}</span></div>
+        </div>
+        {% if trip.interests %}
+        <div class="flex flex-wrap gap-1.5 pt-2">
+          {% for i in trip.interests %}<span class="px-2 py-0.5 bg-primary-container/20 text-primary text-xs rounded-full border border-primary/20">{{ i }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="glass-panel rounded-2xl p-5">
+        <h4 class="font-bold text-on-surface mb-3">Quick Actions</h4>
+        <div class="grid grid-cols-2 gap-2">
+          <a href="{% url 'expenses' %}?trip={{ trip.id }}" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface-container/50 hover:bg-surface-container transition-all text-center">
+            <span class="material-symbols-outlined text-primary mat-filled">payments</span>
+            <span class="text-xs text-on-surface-variant">Expenses</span>
+          </a>
+          <a href="{% url 'packing' %}?trip={{ trip.id }}" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface-container/50 hover:bg-surface-container transition-all text-center">
+            <span class="material-symbols-outlined text-primary mat-filled">backpack</span>
+            <span class="text-xs text-on-surface-variant">Packing</span>
+          </a>
+          <a href="{% url 'budget_planner' %}?trip={{ trip.id }}" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface-container/50 hover:bg-surface-container transition-all text-center">
+            <span class="material-symbols-outlined text-primary mat-filled">account_balance_wallet</span>
+            <span class="text-xs text-on-surface-variant">Budget</span>
+          </a>
+          <a href="{% url 'weather' %}" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface-container/50 hover:bg-surface-container transition-all text-center">
+            <span class="material-symbols-outlined text-primary mat-filled">wb_sunny</span>
+            <span class="text-xs text-on-surface-variant">Weather</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent Expenses -->
+      {% if expenses %}
+      <div class="glass-panel rounded-2xl p-5">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="font-bold text-on-surface">Expenses</h4>
+          <a href="{% url 'expenses' %}?trip={{ trip.id }}" class="text-xs text-primary hover:underline">View All</a>
+        </div>
+        <div class="space-y-2">
+          {% for exp in expenses|slice:":5" %}
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-on-surface-variant truncate flex-1">{{ exp.title }}</span>
+            <span class="font-semibold text-error ml-2">-₹{{ exp.amount|floatformat:0 }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="mt-3 pt-3 border-t border-outline-variant/50 flex justify-between">
+          <span class="text-xs text-on-surface-variant">Total Spent</span>
+          <span class="text-sm font-bold text-error">₹{{ total_spent|floatformat:0 }}</span>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Loading overlay for itinerary generation -->
+<div id="gen-loading" class="hidden fixed inset-0 bg-background/80 backdrop-blur-md z-[200] flex items-center justify-center">
+  <div class="glass-panel rounded-3xl p-10 flex flex-col items-center gap-5 text-center">
+    <div class="w-20 h-20 relative">
+      <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+      <div class="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <span class="absolute inset-0 flex items-center justify-center material-symbols-outlined text-primary text-3xl mat-filled">auto_awesome</span>
+    </div>
+    <div>
+      <p class="text-lg font-bold text-on-surface">Generating Itinerary...</p>
+      <p class="text-sm text-on-surface-variant mt-1">AI is crafting your perfect trip</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if route %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const srcLat = {{ trip.source_lat|default:"20.5937" }};
+  const srcLon = {{ trip.source_lon|default:"78.9629" }};
+  const dstLat = {{ trip.destination_lat|default:"null" }};
+  const dstLon = {{ trip.destination_lon|default:"null" }};
+  const routeCoords = {{ route|safe }};
+  const map = L.map('trip-map').setView([srcLat, srcLon], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  const srcIcon = L.divIcon({ html: '<span class="material-symbols-outlined" style="font-size:28px;color:#95d3ba">my_location</span>', iconSize:[28,28], className:'' });
+  const dstIcon = L.divIcon({ html: '<span class="material-symbols-outlined" style="font-size:32px;color:#ffb4ab">location_on</span>', iconSize:[32,32], className:'' });
+  const srcM = L.marker([srcLat, srcLon], {icon:srcIcon}).addTo(map).bindPopup('<b>From: {{ trip.source|escapejs }}</b>');
+  if (dstLat && dstLon) {
+    const dstM = L.marker([dstLat, dstLon], {icon:dstIcon}).addTo(map).bindPopup('<b>To: {{ trip.destination|escapejs }}</b>');
+    if (routeCoords && routeCoords.length) {
+      const line = L.polyline(routeCoords, {color:'#95d3ba',weight:5,opacity:0.85}).addTo(map);
+      map.fitBounds(line.getBounds().pad(0.1));
+    } else {
+      L.polyline([[srcLat,srcLon],[dstLat,dstLon]], {color:'#95d3ba',weight:4,dashArray:'8,8'}).addTo(map);
+      map.fitBounds(L.featureGroup([srcM,dstM]).getBounds().pad(0.15));
+    }
+  }
+});
+</script>
+{% endif %}
+<script>
+const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+async function generateItinerary() {
+  document.getElementById('gen-loading').classList.remove('hidden');
+  document.getElementById('gen-btn').disabled = true;
+  try {
+    const r = await fetch('/api/ai/generate-itinerary/', {
+      method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body: JSON.stringify({trip_id: {{ trip.id }}})
+    });
+    if (r.ok) { showToast('Itinerary generated! Reloading...', 'success'); setTimeout(() => location.reload(), 1000); }
+    else throw new Error();
+  } catch { showToast('Generation failed. Try again.', 'error'); document.getElementById('gen-loading').classList.add('hidden'); document.getElementById('gen-btn').disabled = false; }
+}
+</script>
+{% endblock %}

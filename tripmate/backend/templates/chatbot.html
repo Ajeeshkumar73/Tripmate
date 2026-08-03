@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}AI Chatbot{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-[calc(100vh-56px)]">
+  <!-- Chat Header -->
+  <div class="px-6 py-4 border-b border-outline-variant/50 glass-panel flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 bg-primary-container/40 rounded-2xl flex items-center justify-center pulse-ai">
+        <span class="material-symbols-outlined text-primary text-2xl mat-filled">smart_toy</span>
+      </div>
+      <div>
+        <h2 class="font-bold text-on-surface">TripMate AI Assistant</h2>
+        <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div><span class="text-xs text-on-surface-variant">Online · Ready to help</span></div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- Trip context selector -->
+      {% if trips %}
+      <select id="trip-ctx" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-1.5 text-xs text-on-surface focus:border-primary transition-all">
+        <option value="">No trip context</option>
+        {% for trip in trips %}<option value="{{ trip.id }}">{{ trip.destination }} ({{ trip.start_date|date:"M Y" }})</option>{% endfor %}
+      </select>
+      {% endif %}
+      <button onclick="clearChat()" class="p-2 rounded-xl border border-outline-variant text-on-surface-variant hover:border-error hover:text-error transition-all" title="Clear chat">
+        <span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="px-6 py-3 border-b border-outline-variant/30 flex gap-2 overflow-x-auto flex-shrink-0">
+    {% for label, msg in quick_actions %}{% endfor %}
+    <button onclick="sendQuick('What are the must-visit places in my destination?')" class="flex-shrink-0 px-3 py-1.5 rounded-full border border-outline-variant text-xs text-on-surface-variant hover:border-primary hover:text-primary transition-all">🗺️ Must-visit places</button>
+    <button onclick="sendQuick('What is the best time to visit and what should I pack?')" class="flex-shrink-0 px-3 py-1.5 rounded-full border border-outline-variant text-xs text-on-surface-variant hover:border-primary hover:text-primary transition-all">🧳 Packing advice</button>
+    <button onclick="sendQuick('Suggest budget-friendly hotels and restaurants.')" class="flex-shrink-0 px-3 py-1.5 rounded-full border border-outline-variant text-xs text-on-surface-variant hover:border-primary hover:text-primary transition-all">🏨 Hotel & Restaurant tips</button>
+    <button onclick="sendQuick('What are the visa requirements for Indian citizens?')" class="flex-shrink-0 px-3 py-1.5 rounded-full border border-outline-variant text-xs text-on-surface-variant hover:border-primary hover:text-primary transition-all">📄 Visa information</button>
+    <button onclick="sendQuick('What local customs should I be aware of?')" class="flex-shrink-0 px-3 py-1.5 rounded-full border border-outline-variant text-xs text-on-surface-variant hover:border-primary hover:text-primary transition-all">🌏 Local customs</button>
+    <button onclick="sendQuick('What are emergency numbers and safety tips for travelers?')" class="flex-shrink-0 px-3 py-1.5 rounded-full border border-outline-variant text-xs text-on-surface-variant hover:border-primary hover:text-primary transition-all">🆘 Emergency info</button>
+    <button onclick="sendQuick('Give me eco-friendly travel tips.')" class="flex-shrink-0 px-3 py-1.5 rounded-full border border-outline-variant text-xs text-on-surface-variant hover:border-primary hover:text-primary transition-all">🌿 Eco travel</button>
+  </div>
+
+  <!-- Messages Area -->
+  <div class="flex-1 overflow-y-auto custom-scrollbar px-6 py-4 space-y-4" id="chat-messages">
+    <!-- Welcome message -->
+    <div class="flex items-start gap-3">
+      <div class="w-8 h-8 bg-primary-container/40 rounded-xl flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined text-primary text-[16px] mat-filled">smart_toy</span>
+      </div>
+      <div class="glass-card rounded-2xl rounded-tl-sm px-4 py-3 max-w-2xl">
+        <p class="text-sm text-on-surface">👋 Hello! I'm <strong>TripMate AI</strong>, your personal travel assistant. I can help you with:</p>
+        <ul class="mt-2 space-y-1 text-xs text-on-surface-variant">
+          <li>🗺️ Destination information & itinerary planning</li>
+          <li>🏨 Hotel & restaurant recommendations</li>
+          <li>💰 Budget tips & expense optimization</li>
+          <li>📋 Visa requirements & travel documents</li>
+          <li>🆘 Emergency contacts & safety information</li>
+          <li>🌿 Local customs, transportation & eco travel</li>
+        </ul>
+        <p class="text-xs text-on-surface-variant mt-2">What can I help you plan today?</p>
+      </div>
+    </div>
+
+    <!-- Existing history -->
+    {% for msg in history %}
+    <div class="flex items-start gap-3 {% if msg.role == 'user' %}flex-row-reverse{% endif %}">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 {% if msg.role == 'user' %}bg-primary text-on-primary{% else %}bg-primary-container/40{% endif %}">
+        <span class="material-symbols-outlined text-[16px] mat-filled">{% if msg.role == 'user' %}person{% else %}smart_toy{% endif %}</span>
+      </div>
+      <div class="{% if msg.role == 'user' %}bg-primary text-on-primary{% else %}glass-card{% endif %} rounded-2xl {% if msg.role == 'user' %}rounded-tr-sm{% else %}rounded-tl-sm{% endif %} px-4 py-3 max-w-2xl">
+        <p class="text-sm {% if msg.role == 'user' %}text-on-primary{% else %}text-on-surface{% endif %} whitespace-pre-wrap">{{ msg.message }}</p>
+        <p class="text-xs opacity-60 mt-1">{{ msg.created_at|timesince }} ago</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Typing Indicator (hidden) -->
+  <div id="typing-indicator" class="hidden px-6 pb-2">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-primary-container/40 rounded-xl flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary text-[16px] mat-filled">smart_toy</span>
+      </div>
+      <div class="glass-card rounded-2xl rounded-tl-sm px-4 py-3">
+        <div class="flex gap-1 items-center h-4">
+          <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay:0ms"></div>
+          <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay:150ms"></div>
+          <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay:300ms"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="px-6 py-4 border-t border-outline-variant/50 flex-shrink-0">
+    <div class="flex gap-3 items-end">
+      <div class="flex-1 bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 focus-within:border-primary transition-all">
+        <textarea id="chat-input" rows="1" placeholder="Ask me anything about travel..." class="w-full bg-transparent text-sm text-on-surface placeholder:text-outline/60 resize-none outline-none max-h-32 overflow-y-auto custom-scrollbar" style="field-sizing:content"></textarea>
+      </div>
+      <button id="send-btn" onclick="sendMessage()" class="w-12 h-12 bg-primary text-on-primary rounded-2xl flex items-center justify-center hover:brightness-110 active:scale-95 transition-all flex-shrink-0">
+        <span class="material-symbols-outlined mat-filled">send</span>
+      </button>
+    </div>
+    <p class="text-xs text-outline mt-2 text-center">TripMate AI can make mistakes. Verify important travel information.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+const messagesEl = document.getElementById('chat-messages');
+const inputEl = document.getElementById('chat-input');
+const typingEl = document.getElementById('typing-indicator');
+const sendBtn = document.getElementById('send-btn');
+
+// Auto-resize textarea
+inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(inputEl.scrollHeight, 128) + 'px'; });
+
+// Enter to send (Shift+Enter for newline)
+inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+// Scroll to bottom
+function scrollDown() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+scrollDown();
+
+function appendMessage(role, text, animate = false) {
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.className = `flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''} ${animate ? 'opacity-0 translate-y-4' : ''}`;
+  div.style.transition = 'all 0.3s ease';
+  div.innerHTML = `
+    <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-primary text-on-primary' : 'bg-primary-container/40'}">
+      <span class="material-symbols-outlined text-[16px] mat-filled">${isUser ? 'person' : 'smart_toy'}</span>
+    </div>
+    <div class="${isUser ? 'bg-primary text-on-primary' : 'glass-card'} rounded-2xl ${isUser ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-4 py-3 max-w-2xl">
+      <p class="text-sm ${isUser ? 'text-on-primary' : 'text-on-surface'} whitespace-pre-wrap">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+    </div>`;
+  messagesEl.appendChild(div);
+  if (animate) requestAnimationFrame(() => { setTimeout(() => { div.classList.remove('opacity-0','translate-y-4'); }, 10); });
+  scrollDown();
+}
+
+async function sendMessage() {
+  const msg = inputEl.value.trim();
+  if (!msg) return;
+  const tripId = document.getElementById('trip-ctx')?.value || null;
+
+  appendMessage('user', msg, true);
+  inputEl.value = ''; inputEl.style.height = 'auto';
+  sendBtn.disabled = true;
+  typingEl.classList.remove('hidden');
+  scrollDown();
+
+  try {
+    const resp = await fetch('/api/ai/chat/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body: JSON.stringify({message: msg, trip_id: tripId})
+    });
+    const data = await resp.json();
+    typingEl.classList.add('hidden');
+    appendMessage('assistant', data.response || 'Sorry, I could not respond.', true);
+  } catch(e) {
+    typingEl.classList.add('hidden');
+    appendMessage('assistant', 'I'm having trouble connecting. Please try again.', true);
+  } finally { sendBtn.disabled = false; }
+}
+
+function sendQuick(msg) { inputEl.value = msg; sendMessage(); }
+
+async function clearChat() {
+  if (!confirm('Clear chat history?')) return;
+  await fetch('/api/ai/chat/', { method: 'DELETE', headers: {'X-CSRFToken':CSRF} });
+  const msgs = messagesEl.querySelectorAll('.flex.items-start');
+  msgs.forEach((m, i) => { if (i > 0) m.remove(); });
+  showToast('Chat history cleared.', 'info');
+}
+</script>
+{% endblock %}

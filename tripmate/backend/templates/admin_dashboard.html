@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <div class="flex items-center justify-between">
+    <div><h2 class="text-2xl font-bold text-on-surface">Admin Dashboard</h2><p class="text-on-surface-variant text-sm mt-1">Platform overview and management</p></div>
+    <a href="/admin/" class="px-4 py-2 border border-outline-variant text-on-surface-variant rounded-xl text-sm hover:border-primary hover:text-primary transition-all">Django Admin →</a>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="glass-panel p-5 rounded-2xl"><p class="text-xs text-on-surface-variant uppercase tracking-wider">Total Users</p><p class="text-3xl font-bold text-primary mt-1">{{ total_users }}</p></div>
+    <div class="glass-panel p-5 rounded-2xl"><p class="text-xs text-on-surface-variant uppercase tracking-wider">Total Trips</p><p class="text-3xl font-bold text-on-surface mt-1">{{ total_trips }}</p></div>
+    <div class="glass-panel p-5 rounded-2xl"><p class="text-xs text-on-surface-variant uppercase tracking-wider">AI Trips</p><p class="text-3xl font-bold text-tertiary mt-1">{{ ai_trips }}</p></div>
+    <div class="glass-panel p-5 rounded-2xl"><p class="text-xs text-on-surface-variant uppercase tracking-wider">Total Reviewed</p><p class="text-3xl font-bold text-on-surface mt-1">{{ total_reviews }}</p></div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <!-- Top Destinations -->
+    <div class="glass-panel rounded-2xl p-5">
+      <h3 class="font-bold text-on-surface mb-4">Top Destinations</h3>
+      <div class="space-y-3">
+        {% for dest in top_destinations %}
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 bg-primary-container/30 rounded-lg flex items-center justify-center text-xs font-bold text-primary">{{ forloop.counter }}</div>
+          <div class="flex-1"><p class="text-sm font-medium text-on-surface">{{ dest.destination }}</p></div>
+          <span class="text-xs px-2 py-0.5 bg-surface-container rounded-full text-on-surface-variant">{{ dest.count }} trips</span>
+        </div>
+        {% empty %}
+        <p class="text-sm text-on-surface-variant">No data yet</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="glass-panel rounded-2xl p-5 space-y-4">
+      <h3 class="font-bold text-on-surface">Platform Stats</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between items-center p-3 bg-surface-container/50 rounded-xl"><span class="text-sm text-on-surface-variant">Total Expenses Tracked</span><span class="font-bold text-error">₹{{ total_expenses|floatformat:0 }}</span></div>
+        <div class="flex justify-between items-center p-3 bg-surface-container/50 rounded-xl"><span class="text-sm text-on-surface-variant">Reported Reviews</span><span class="font-bold text-{% if reported_reviews > 0 %}error{% else %}primary{% endif %}">{{ reported_reviews }}</span></div>
+        <div class="flex justify-between items-center p-3 bg-surface-container/50 rounded-xl"><span class="text-sm text-on-surface-variant">Total Reviews</span><span class="font-bold text-on-surface">{{ total_reviews }}</span></div>
+      </div>
+    </div>
+
+    <!-- Recent Users -->
+    <div class="glass-panel rounded-2xl p-5">
+      <h3 class="font-bold text-on-surface mb-4">Recent Users</h3>
+      <div class="space-y-2">
+        {% for u in recent_users %}
+        <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-variant/30 transition-all">
+          <div class="w-8 h-8 bg-primary-container/30 rounded-full flex items-center justify-center"><span class="material-symbols-outlined text-primary text-[14px] mat-filled">person</span></div>
+          <div class="flex-1"><p class="text-sm font-medium text-on-surface">{{ u.username }}</p><p class="text-xs text-on-surface-variant">{{ u.email }}</p></div>
+          <span class="text-xs text-outline">{{ u.date_joined|date:"M d" }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Reported Reviews -->
+    {% if reported_reviews > 0 %}
+    <div class="glass-panel rounded-2xl p-5">
+      <h3 class="font-bold text-on-surface mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-error text-[18px]">flag</span> Reported Reviews ({{ reported_reviews }})</h3>
+      <div class="space-y-2">
+        {% for review in recent_reviews %}
+        <div class="p-3 bg-error-container/10 border border-error/20 rounded-xl">
+          <div class="flex items-start justify-between"><p class="text-sm font-medium text-on-surface">{{ review.title }}</p><span class="text-xs text-error">Reported</span></div>
+          <p class="text-xs text-on-surface-variant mt-1 line-clamp-2">{{ review.content }}</p>
+          <p class="text-xs text-outline mt-1">By: {{ review.user.username }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

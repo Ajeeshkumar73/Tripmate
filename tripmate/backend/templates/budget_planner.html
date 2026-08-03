@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Budget Planner{% endblock %}
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <div><h2 class="text-2xl font-bold text-on-surface">Smart Budget Planner</h2><p class="text-on-surface-variant text-sm mt-1">AI-powered budget allocation for your trips</p></div>
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Trip Selector & Budget Input -->
+    <div class="space-y-4">
+      <div class="glass-panel rounded-2xl p-5">
+        <h3 class="font-bold text-on-surface mb-4">Select Trip</h3>
+        <div class="space-y-2">
+          {% for trip in trips %}
+          <a href="?trip={{ trip.id }}" class="flex items-center gap-3 p-3 rounded-xl {% if selected_trip.id == trip.id %}bg-primary-container/20 border border-primary/30{% else %}bg-surface-container/50 border border-transparent hover:border-outline-variant{% endif %} transition-all block">
+            <span class="material-symbols-outlined text-primary text-[18px] mat-filled">flight_takeoff</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-on-surface truncate">{{ trip.destination }}</p>
+              <p class="text-xs text-on-surface-variant">₹{{ trip.budget|floatformat:0 }} · {{ trip.duration_days }} days</p>
+            </div>
+          </a>
+          {% empty %}
+          <p class="text-sm text-on-surface-variant text-center py-4">No trips yet. <a href="{% url 'ai_planner' %}" class="text-primary hover:underline">Create one</a></p>
+          {% endfor %}
+        </div>
+      </div>
+      {% if selected_trip %}
+      <div class="glass-panel rounded-2xl p-5">
+        <h3 class="font-bold text-on-surface mb-4">Adjust Budget</h3>
+        <form id="budget-form" class="space-y-3">
+          <div>
+            <label class="text-xs text-on-surface-variant uppercase tracking-wider block mb-1.5">Total Budget (₹)</label>
+            <input id="total-budget" type="number" value="{{ selected_trip.budget }}" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-on-surface focus:border-primary transition-all" />
+          </div>
+          <p class="text-xs text-on-surface-variant">AI will auto-calculate category allocations based on destination and trip type.</p>
+          <button type="submit" class="w-full py-2.5 bg-primary text-on-primary rounded-xl font-semibold text-sm hover:brightness-110 transition-all">
+            <span class="material-symbols-outlined text-[16px] mat-filled">auto_awesome</span> Calculate Budget
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Charts & Breakdown -->
+    {% if budget %}
+    <div class="xl:col-span-2 space-y-4">
+      <div class="grid grid-cols-3 gap-4">
+        <div class="glass-panel p-4 rounded-2xl text-center">
+          <p class="text-xs text-on-surface-variant">Total</p>
+          <p class="text-2xl font-bold text-on-surface">₹{{ budget.total_budget|floatformat:0 }}</p>
+        </div>
+        <div class="glass-panel p-4 rounded-2xl text-center">
+          <p class="text-xs text-on-surface-variant">Spent</p>
+          <p class="text-2xl font-bold text-error">₹{{ budget.total_spent|floatformat:0 }}</p>
+        </div>
+        <div class="glass-panel p-4 rounded-2xl text-center">
+          <p class="text-xs text-on-surface-variant">Daily</p>
+          <p class="text-2xl font-bold text-primary">₹{{ budget.daily_budget|floatformat:0 }}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glass-panel rounded-2xl p-5">
+          <h4 class="font-bold text-on-surface mb-4">Allocation Chart</h4>
+          <div class="h-56"><canvas id="budget-pie"></canvas></div>
+        </div>
+        <div class="glass-panel rounded-2xl p-5">
+          <h4 class="font-bold text-on-surface mb-4">Category Breakdown</h4>
+          <div class="space-y-3">
+            {% for cat, alloc, color in budget_cats %}
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span class="text-on-surface-variant capitalize">{{ cat }}</span><span class="font-semibold text-on-surface">₹{{ alloc|floatformat:0 }}</span></div>
+              <div class="h-2 bg-surface-container rounded-full overflow-hidden">
+                <div class="h-full rounded-full" style="width:{% widthratio alloc budget.total_budget 100 %}%;background:{{ color }}"></div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {% if budget.ai_suggestions %}
+      <div class="glass-panel rounded-2xl p-5">
+        <h4 class="font-bold text-on-surface mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px] mat-filled">tips_and_updates</span> AI Cost-Saving Tips</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {% for tip in budget.ai_suggestions %}<div class="flex items-start gap-2 text-xs text-on-surface-variant p-2 rounded-xl bg-surface-container/50"><span class="material-symbols-outlined text-primary text-[14px] mt-0.5">savings</span>{{ tip }}</div>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% elif selected_trip %}
+    <div class="xl:col-span-2 glass-panel rounded-2xl p-12 text-center">
+      <span class="material-symbols-outlined text-5xl text-outline mat-filled block mb-4">account_balance_wallet</span>
+      <p class="font-semibold text-on-surface">No budget plan yet</p>
+      <p class="text-xs text-on-surface-variant mt-1">Click "Calculate Budget" to generate a smart plan</p>
+    </div>
+    {% else %}
+    <div class="xl:col-span-2 glass-panel rounded-2xl p-12 text-center">
+      <span class="material-symbols-outlined text-5xl text-outline mat-filled block mb-4">account_balance_wallet</span>
+      <p class="font-semibold text-on-surface">Select a trip to plan its budget</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if budget %}
+<script>
+const budgetData = {
+  labels: ['Hotel','Food','Transport','Tickets','Shopping','Misc'],
+  values: [{{ budget.hotel_allocation }},{{ budget.food_allocation }},{{ budget.transport_allocation }},{{ budget.tickets_allocation }},{{ budget.shopping_allocation }},{{ budget.misc_allocation }}],
+  colors: ['#3b82f6','#f97316','#8b5cf6','#14b8a6','#ec4899','#6b7280']
+};
+new Chart(document.getElementById('budget-pie').getContext('2d'), {
+  type:'doughnut',data:{labels:budgetData.labels,datasets:[{data:budgetData.values,backgroundColor:budgetData.colors,borderColor:'#051426',borderWidth:3}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#bfc9c3',font:{size:11}}}},cutout:'65%'}
+});
+</script>
+{% endif %}
+{% if selected_trip %}
+<script>
+const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+document.getElementById('budget-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const total = parseFloat(document.getElementById('total-budget').value);
+  const resp = await fetch('/api/budget/{{ selected_trip.id }}/', {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify({total_budget: total})
+  });
+  if (resp.ok) { showToast('Budget calculated!', 'success'); setTimeout(() => location.reload(), 800); }
+  else showToast('Failed to calculate budget', 'error');
+});
+</script>
+{% endif %}
+{% endblock %}

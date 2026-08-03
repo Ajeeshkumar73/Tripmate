@@ -1,0 +1,1273 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TripMate AI – Smart Travel Planner &amp; AI Assistant</title>
+    <meta
+      name="description"
+      content="AI-powered travel planner that generates personalized itineraries, tracks budgets, monitors weather, and guides you every step of your journey."
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      * {
+        font-family: "Inter", sans-serif;
+      }
+      body {
+        background: #051426;
+        color: #d5e3fd;
+      }
+      .glass {
+        background: rgba(18, 32, 51, 0.72);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .glass-card {
+        background: rgba(18, 32, 51, 0.6);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(149, 211, 186, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-14px);
+        }
+      }
+      @keyframes pulse-ring {
+        0% {
+          box-shadow: 0 0 0 0 rgba(149, 211, 186, 0.4);
+        }
+        70% {
+          box-shadow: 0 0 0 22px rgba(149, 211, 186, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(149, 211, 186, 0);
+        }
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(40px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: -1000px 0;
+        }
+        100% {
+          background-position: 1000px 0;
+        }
+      }
+      .float {
+        animation: float 5s ease-in-out infinite;
+      }
+      .pulse-ring {
+        animation: pulse-ring 3s infinite;
+      }
+      .slide-up {
+        animation: slideUp 0.7s ease both;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400;
+      }
+      .mat-filled {
+        font-variation-settings:
+          "FILL" 1,
+          "wght" 400;
+      }
+      .gradient-text {
+        background: linear-gradient(
+          135deg,
+          #95d3ba 0%,
+          #a8cfbc 50%,
+          #bec6e0 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      /* Reveal animation on scroll */
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.7s ease;
+      }
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      /* Step connector line */
+      .step-line::before {
+        content: "";
+        position: absolute;
+        top: 32px;
+        left: calc(50% + 40px);
+        width: calc(100% - 80px);
+        height: 2px;
+        background: linear-gradient(90deg, #95d3ba33, #95d3ba99, #95d3ba33);
+      }
+      /* Star rating */
+      .star-rating input {
+        display: none;
+      }
+      .star-rating label {
+        cursor: pointer;
+        font-size: 1.8rem;
+        color: #404944;
+        transition: color 0.15s;
+      }
+      .star-rating input:checked ~ label,
+      .star-rating label:hover,
+      .star-rating label:hover ~ label {
+        color: #95d3ba;
+      }
+      .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        gap: 4px;
+      }
+      /* Nav scroll effect */
+      nav.scrolled {
+        background: rgba(5, 20, 38, 0.95) !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── Navbar ─────────────────────────────────────────────────────────── -->
+    <nav
+      id="main-nav"
+      class="fixed top-0 w-full z-50 glass border-b border-white/5 transition-all duration-300"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <span
+            class="material-symbols-outlined text-[#95d3ba] text-3xl mat-filled"
+            >travel_explore</span
+          >
+          <span class="text-xl font-black text-white tracking-tight"
+            >TripMate AI</span
+          >
+        </div>
+        <div
+          class="hidden md:flex items-center gap-6 text-sm font-medium text-[#bfc9c3]"
+        >
+          <a href="#home" class="hover:text-[#95d3ba] transition-colors"
+            >Home</a
+          >
+          <a href="#features" class="hover:text-[#95d3ba] transition-colors"
+            >Features</a
+          >
+          <a href="#how-it-works" class="hover:text-[#95d3ba] transition-colors"
+            >How It Works</a
+          >
+          <a href="#community" class="hover:text-[#95d3ba] transition-colors"
+            >Reviews</a
+          >
+        </div>
+        <div class="flex items-center gap-3">
+          <a
+            href="{% url 'Login_page' %}"
+            class="px-5 py-2 rounded-xl text-sm font-semibold text-[#95d3ba] border border-[#95d3ba]/30 hover:bg-[#95d3ba]/10 transition-all"
+            >Login</a
+          >
+          <a
+            href="{% url 'register_page' %}"
+            class="px-5 py-2 rounded-xl text-sm font-semibold bg-[#95d3ba] text-[#003829] hover:brightness-110 active:scale-95 transition-all"
+            >Get Started Free</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <!-- ── Hero ──────────────────────────────────────────────────────────── -->
+    <section
+      id="home"
+      class="min-h-screen flex items-center justify-center pt-24 pb-16 px-6 relative overflow-hidden"
+    >
+      <!-- Ambient blobs -->
+      <div
+        class="absolute top-1/4 left-1/5 w-[500px] h-[500px] bg-[#95d3ba]/5 rounded-full blur-3xl pointer-events-none animate-pulse"
+      ></div>
+      <div
+        class="absolute bottom-1/4 right-1/5 w-[400px] h-[400px] bg-[#bec6e0]/5 rounded-full blur-3xl pointer-events-none animate-pulse"
+        style="animation-delay: 1.5s"
+      ></div>
+      <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#95d3ba]/3 rounded-full blur-[100px] pointer-events-none"
+      ></div>
+
+      <div class="text-center max-w-5xl mx-auto relative z-10 slide-up">
+        <h1
+          class="text-5xl sm:text-7xl font-black text-white leading-tight mb-6"
+        >
+          Your <span class="gradient-text">AI-Powered</span><br />Travel
+          Companion
+        </h1>
+        <p
+          class="text-xl text-[#bfc9c3] max-w-2xl mx-auto mb-10 leading-relaxed"
+        >
+          Plan perfect trips with personalized AI itineraries, real-time
+          weather, interactive maps, smart budgeting, and a 24/7 travel
+          assistant—all in one beautiful platform.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <a
+            href="{% url 'register_page' %}"
+            class="group px-8 py-4 bg-[#95d3ba] text-[#003829] rounded-2xl font-bold text-lg hover:shadow-2xl hover:shadow-[#95d3ba]/30 hover:-translate-y-1 transition-all pulse-ring flex items-center justify-center gap-2"
+          >
+            <span class="material-symbols-outlined mat-filled"
+              >rocket_launch</span
+            >
+            Start Planning Free →
+          </a>
+          <a
+            href="{% url 'Login_page' %}"
+            class="px-8 py-4 glass border border-white/10 text-white rounded-2xl font-semibold text-lg hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+          >
+            <span class="material-symbols-outlined">login</span>
+            Sign In
+          </a>
+        </div>
+
+        <!-- Stat pills -->
+        <div class="flex flex-wrap justify-center gap-4">
+          <div
+            class="glass px-4 py-2 rounded-full text-sm font-medium text-[#bfc9c3] flex items-center gap-2"
+          >
+            <span
+              class="material-symbols-outlined text-[#95d3ba] text-base mat-filled"
+              >group</span
+            >
+            500K+ Travelers
+          </div>
+          <div
+            class="glass px-4 py-2 rounded-full text-sm font-medium text-[#bfc9c3] flex items-center gap-2"
+          >
+            <span
+              class="material-symbols-outlined text-[#95d3ba] text-base mat-filled"
+              >luggage</span
+            >
+            2M+ Trips Planned
+          </div>
+          <div
+            class="glass px-4 py-2 rounded-full text-sm font-medium text-[#bfc9c3] flex items-center gap-2"
+          >
+            <span
+              class="material-symbols-outlined text-[#95d3ba] text-base mat-filled"
+              >star</span
+            >
+            4.9 / 5 Rating
+          </div>
+          <div
+            class="glass px-4 py-2 rounded-full text-sm font-medium text-[#bfc9c3] flex items-center gap-2"
+          >
+            <span
+              class="material-symbols-outlined text-[#95d3ba] text-base mat-filled"
+              >language</span
+            >
+            150+ Countries
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Features ───────────────────────────────────────────────────────── -->
+    <section class="py-24 px-6" id="features">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-16 reveal">
+          <h2 class="text-4xl font-black text-white mb-4">
+            Everything You Need to Travel Smarter
+          </h2>
+          <p class="text-[#bfc9c3] max-w-xl mx-auto">
+            A comprehensive suite of AI-powered tools to make every journey
+            perfect
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for icon,color,title,desc in features_list %} {% empty %}
+          <!-- AI Itinerary -->
+          <div
+            class="glass rounded-2xl p-6 hover:border-[#95d3ba]/30 border border-transparent transition-all group reveal hover:-translate-y-1"
+          >
+            <div
+              class="w-12 h-12 rounded-2xl bg-[#95d3ba]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+            >
+              <span
+                class="material-symbols-outlined text-[#95d3ba] text-2xl mat-filled"
+                >auto_awesome</span
+              >
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">
+              AI Itinerary Generator
+            </h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              Get a complete day-by-day personalized trip plan with activities,
+              restaurants, hotels, and costs—generated in seconds by Groq AI.
+            </p>
+          </div>
+          <!-- Maps -->
+          <div
+            class="glass rounded-2xl p-6 hover:border-[#a8cfbc]/30 border border-transparent transition-all group reveal hover:-translate-y-1"
+            style="transition-delay: 50ms"
+          >
+            <div
+              class="w-12 h-12 rounded-2xl bg-[#a8cfbc]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+            >
+              <span
+                class="material-symbols-outlined text-[#a8cfbc] text-2xl mat-filled"
+                >map</span
+              >
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">Interactive Maps</h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              Explore routes, nearby attractions, hotels, ATMs, restaurants, and
+              emergency services with our real-time interactive map explorer.
+            </p>
+          </div>
+          <!-- Budget -->
+          <div
+            class="glass rounded-2xl p-6 hover:border-[#bec6e0]/30 border border-transparent transition-all group reveal hover:-translate-y-1"
+            style="transition-delay: 100ms"
+          >
+            <div
+              class="w-12 h-12 rounded-2xl bg-[#bec6e0]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+            >
+              <span
+                class="material-symbols-outlined text-[#bec6e0] text-2xl mat-filled"
+                >account_balance_wallet</span
+              >
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">
+              Smart Budget Planner
+            </h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              AI allocates your budget across categories and tracks every
+              expense with beautiful charts and personalized savings tips.
+            </p>
+          </div>
+          <!-- Chatbot -->
+          <div
+            class="glass rounded-2xl p-6 hover:border-[#95d3ba]/30 border border-transparent transition-all group reveal hover:-translate-y-1"
+            style="transition-delay: 150ms"
+          >
+            <div
+              class="w-12 h-12 rounded-2xl bg-[#95d3ba]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+            >
+              <span
+                class="material-symbols-outlined text-[#95d3ba] text-2xl mat-filled"
+                >smart_toy</span
+              >
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">AI Travel Chatbot</h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              Chat with your personal travel AI 24/7 for visa info, packing
+              advice, local customs, emergency help, and real-time answers.
+            </p>
+          </div>
+          <!-- Weather -->
+          <div
+            class="glass rounded-2xl p-6 hover:border-amber-400/30 border border-transparent transition-all group reveal hover:-translate-y-1"
+            style="transition-delay: 200ms"
+          >
+            <div
+              class="w-12 h-12 rounded-2xl bg-amber-400/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+            >
+              <span
+                class="material-symbols-outlined text-amber-400 text-2xl mat-filled"
+                >wb_sunny</span
+              >
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">
+              Live Weather Forecasts
+            </h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              Get 7-day forecasts, hourly weather charts, and UV index data for
+              any destination worldwide, powered by Open-Meteo.
+            </p>
+          </div>
+          <!-- Emergency -->
+          <div
+            class="glass rounded-2xl p-6 hover:border-rose-400/30 border border-transparent transition-all group reveal hover:-translate-y-1"
+            style="transition-delay: 250ms"
+          >
+            <div
+              class="w-12 h-12 rounded-2xl bg-rose-400/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+            >
+              <span
+                class="material-symbols-outlined text-rose-400 text-2xl mat-filled"
+                >emergency</span
+              >
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">
+              Emergency Assistant
+            </h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              Store emergency contacts, access national helplines instantly, and
+              keep travel documents safe in your digital wallet.
+            </p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── How It Works ────────────────────────────────────────────────────── -->
+    <section
+      class="py-24 px-6 relative"
+      id="how-it-works"
+      style="
+        background: linear-gradient(
+          180deg,
+          #051426 0%,
+          #071929 50%,
+          #051426 100%
+        );
+      "
+    >
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-20 reveal">
+          <span
+            class="inline-block px-3 py-1 rounded-full text-xs font-bold text-[#95d3ba] bg-[#95d3ba]/10 border border-[#95d3ba]/20 mb-4 uppercase tracking-widest"
+            >Simple Process</span
+          >
+          <h2 class="text-4xl font-black text-white mb-4">
+            Your Journey Starts Here
+          </h2>
+          <p class="text-[#bfc9c3] max-w-xl mx-auto">
+            From dream destination to departure — in four effortless steps.
+          </p>
+        </div>
+
+        <!-- Steps Grid -->
+        <div class="grid md:grid-cols-4 gap-8 relative">
+          <!-- Connector line (desktop) -->
+          <div
+            class="hidden md:block absolute top-11 left-[12.5%] w-[75%] h-0.5"
+            style="
+              background: linear-gradient(
+                90deg,
+                transparent,
+                #95d3ba55,
+                #95d3ba99,
+                #95d3ba55,
+                transparent
+              );
+            "
+          ></div>
+
+          <!-- Step 1 -->
+          <div class="text-center reveal group">
+            <div class="relative mx-auto w-24 h-24 mb-6">
+              <div
+                class="absolute inset-0 rounded-full bg-[#95d3ba]/10 group-hover:bg-[#95d3ba]/20 transition-all border-2 border-[#95d3ba]/30 group-hover:border-[#95d3ba]/60 group-hover:scale-105 transition-transform"
+              ></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span
+                  class="material-symbols-outlined text-[#95d3ba] text-3xl mat-filled"
+                  >edit_location</span
+                >
+              </div>
+              <div
+                class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#95d3ba] text-[#003829] text-xs font-black flex items-center justify-center shadow-lg"
+              >
+                1
+              </div>
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">Enter Details</h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              Tell us your destination, travel dates, budget, and travel style
+              preferences.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="text-center reveal group" style="transition-delay: 100ms">
+            <div class="relative mx-auto w-24 h-24 mb-6">
+              <div
+                class="absolute inset-0 rounded-full bg-[#95d3ba]/10 group-hover:bg-[#95d3ba]/20 transition-all border-2 border-[#95d3ba]/30 group-hover:border-[#95d3ba]/60 group-hover:scale-105 transition-transform"
+              ></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span
+                  class="material-symbols-outlined text-[#95d3ba] text-3xl mat-filled"
+                  >auto_awesome</span
+                >
+              </div>
+              <div
+                class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#95d3ba] text-[#003829] text-xs font-black flex items-center justify-center shadow-lg"
+              >
+                2
+              </div>
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">AI Generates</h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              Our Groq-powered AI crafts a logical, high-value day-by-day
+              itinerary in seconds.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="text-center reveal group" style="transition-delay: 200ms">
+            <div class="relative mx-auto w-24 h-24 mb-6">
+              <div
+                class="absolute inset-0 rounded-full bg-[#95d3ba]/10 group-hover:bg-[#95d3ba]/20 transition-all border-2 border-[#95d3ba]/30 group-hover:border-[#95d3ba]/60 group-hover:scale-105 transition-transform"
+              ></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span
+                  class="material-symbols-outlined text-[#95d3ba] text-3xl mat-filled"
+                  >tune</span
+                >
+              </div>
+              <div
+                class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#95d3ba] text-[#003829] text-xs font-black flex items-center justify-center shadow-lg"
+              >
+                3
+              </div>
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">Customize & Plan</h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              Refine activities, track budget, set up packing lists, and
+              organize all your documents.
+            </p>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="text-center reveal group" style="transition-delay: 300ms">
+            <div class="relative mx-auto w-24 h-24 mb-6">
+              <div
+                class="absolute inset-0 rounded-full bg-[#95d3ba]/10 group-hover:bg-[#95d3ba]/20 transition-all border-2 border-[#95d3ba]/30 group-hover:border-[#95d3ba]/60 group-hover:scale-105 transition-transform"
+              ></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span
+                  class="material-symbols-outlined text-[#95d3ba] text-3xl mat-filled"
+                  >travel_explore</span
+                >
+              </div>
+              <div
+                class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#95d3ba] text-[#003829] text-xs font-black flex items-center justify-center shadow-lg"
+              >
+                4
+              </div>
+            </div>
+            <h3 class="font-bold text-white text-lg mb-2">
+              Enjoy &amp; Explore
+            </h3>
+            <p class="text-[#bfc9c3] text-sm leading-relaxed">
+              Real-time weather, live maps, AI chatbot, and smart guides as you
+              roam the world.
+            </p>
+          </div>
+        </div>
+
+        <!-- Visual demo card -->
+        <div class="mt-16 reveal">
+          <div
+            class="glass-card rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8"
+          >
+            <div class="flex-1">
+              <span
+                class="inline-block px-3 py-1 rounded-full text-xs font-bold text-[#95d3ba] bg-[#95d3ba]/10 mb-4"
+                >Live Example</span
+              >
+              <h3 class="text-2xl font-black text-white mb-3">
+                Mumbai → Goa in 30 seconds
+              </h3>
+              <p class="text-[#bfc9c3] mb-6 leading-relaxed">
+                Enter your route, dates, and budget. TripMate AI instantly
+                builds a 5-day itinerary with beach shacks, water sports,
+                nightlife, restaurant picks, and real-time costs.
+              </p>
+              <a
+                href="{% url 'register_page' %}"
+                class="inline-flex items-center gap-2 px-6 py-3 bg-[#95d3ba] text-[#003829] rounded-xl font-bold hover:brightness-110 transition-all"
+              >
+                <span class="material-symbols-outlined mat-filled text-lg"
+                  >rocket_launch</span
+                >
+                Try It Now
+              </a>
+            </div>
+            <div class="flex-shrink-0 grid grid-cols-2 gap-3 w-full md:w-64">
+              {% for item in demo_stats %} {% empty %}
+              <div class="glass rounded-2xl p-4 text-center">
+                <div class="text-2xl font-black text-[#95d3ba]">5</div>
+                <div class="text-xs text-[#bfc9c3] mt-1">Days Planned</div>
+              </div>
+              <div class="glass rounded-2xl p-4 text-center">
+                <div class="text-2xl font-black text-[#95d3ba]">24</div>
+                <div class="text-xs text-[#bfc9c3] mt-1">Activities</div>
+              </div>
+              <div class="glass rounded-2xl p-4 text-center">
+                <div class="text-2xl font-black text-[#95d3ba]">₹25K</div>
+                <div class="text-xs text-[#bfc9c3] mt-1">Budget Plan</div>
+              </div>
+              <div class="glass rounded-2xl p-4 text-center">
+                <div class="text-2xl font-black text-[#95d3ba]">30s</div>
+                <div class="text-xs text-[#bfc9c3] mt-1">Generated In</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Traveler Reviews ────────────────────────────────────────────────── -->
+    <section class="py-24 px-6" id="community">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-16 reveal">
+          <span
+            class="inline-block px-3 py-1 rounded-full text-xs font-bold text-[#95d3ba] bg-[#95d3ba]/10 border border-[#95d3ba]/20 mb-4 uppercase tracking-widest"
+            >Community</span
+          >
+          <h2 class="text-4xl font-black text-white mb-4">Traveler Stories</h2>
+          <p class="text-[#bfc9c3]">
+            Real experiences from our community of explorers around the world.
+          </p>
+        </div>
+
+        <!-- Django Flash Messages -->
+        {% if messages %}
+        <div class="mb-8 space-y-2">
+          {% for message in messages %}
+          <div
+            class="flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium {% if message.tags == 'error' %}bg-red-900/40 text-red-300 border border-red-500/30 {% else %}bg-[#95d3ba]/10 text-[#95d3ba] border border-[#95d3ba]/30{% endif %}"
+          >
+            <span class="material-symbols-outlined text-lg">
+              {% if message.tags == 'error' %}error{% else %}check_circle{%
+              endif %}
+            </span>
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Reviews Grid: Real DB reviews or fallback static -->
+        <div class="grid md:grid-cols-3 gap-6 mb-12">
+          {% for review in reviews %}
+          <div
+            class="glass-card rounded-2xl p-6 reveal hover:-translate-y-1 transition-all"
+            style="transition-delay:{{ forloop.counter0 }}00ms"
+          >
+            <!-- Stars -->
+            <div class="flex gap-0.5 mb-4">
+              {% for i in "12345" %}
+              <span
+                class="material-symbols-outlined text-lg {% if forloop.counter <= review.rating %}text-[#95d3ba] mat-filled{% else %}text-[#404944]{% endif %}"
+                >star</span
+              >
+              {% endfor %}
+            </div>
+            <p class="text-[#d5e3fd] text-sm leading-relaxed italic mb-5">
+              "{{ review.content|truncatechars:160 }}"
+            </p>
+            <div class="flex items-center gap-3 pt-4 border-t border-white/5">
+              <div
+                class="w-10 h-10 rounded-full bg-[#95d3ba]/20 border border-[#95d3ba]/30 flex items-center justify-center"
+              >
+                <span class="text-[#95d3ba] font-bold text-sm"
+                  >{{ review.user.username|slice:":1"|upper }}</span
+                >
+              </div>
+              <div>
+                <div class="font-semibold text-white text-sm">
+                  {{ review.user.get_full_name|default:review.user.username }}
+                </div>
+                <div class="text-xs text-[#89938d]">
+                  {{ review.created_at|date:"M d, Y" }}
+                </div>
+              </div>
+              <div class="ml-auto">
+                <span
+                  class="text-[10px] text-[#95d3ba] bg-[#95d3ba]/10 px-2 py-1 rounded-full font-medium"
+                  >Verified</span
+                >
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <!-- Static fallback reviews when DB is empty -->
+          <div
+            class="glass-card rounded-2xl p-6 reveal hover:-translate-y-1 transition-all"
+          >
+            <div class="flex gap-0.5 mb-4">
+              {% for i in "12345" %}<span
+                class="material-symbols-outlined text-lg text-[#95d3ba] mat-filled"
+                >star</span
+              >{% endfor %}
+            </div>
+            <p class="text-[#d5e3fd] text-sm leading-relaxed italic mb-5">
+              "TripMate AI completely transformed how we travel. The AI
+              predicted a rail strike in Germany and re-routed us through the
+              Swiss Alps automatically. Absolutely magical!"
+            </p>
+            <div class="flex items-center gap-3 pt-4 border-t border-white/5">
+              <div
+                class="w-10 h-10 rounded-full bg-[#95d3ba]/20 border border-[#95d3ba]/30 flex items-center justify-center"
+              >
+                <span class="text-[#95d3ba] font-bold text-sm">S</span>
+              </div>
+              <div>
+                <div class="font-semibold text-white text-sm">
+                  Sarah Jenkins
+                </div>
+                <div class="text-xs text-[#89938d]">Digital Nomad</div>
+              </div>
+              <span
+                class="ml-auto text-[10px] text-[#95d3ba] bg-[#95d3ba]/10 px-2 py-1 rounded-full font-medium"
+                >Verified</span
+              >
+            </div>
+          </div>
+          <div
+            class="glass-card rounded-2xl p-6 reveal hover:-translate-y-1 transition-all"
+            style="transition-delay: 100ms"
+          >
+            <div class="flex gap-0.5 mb-4">
+              {% for i in "12345" %}<span
+                class="material-symbols-outlined text-lg text-[#95d3ba] mat-filled"
+                >star</span
+              >{% endfor %}
+            </div>
+            <p class="text-[#d5e3fd] text-sm leading-relaxed italic mb-5">
+              "The budgeting tool is eerie in its accuracy. It predicted our
+              Tokyo trip expenses within ₹200. For a family of five, that kind
+              of predictability is absolutely priceless."
+            </p>
+            <div class="flex items-center gap-3 pt-4 border-t border-white/5">
+              <div
+                class="w-10 h-10 rounded-full bg-[#95d3ba]/20 border border-[#95d3ba]/30 flex items-center justify-center"
+              >
+                <span class="text-[#95d3ba] font-bold text-sm">M</span>
+              </div>
+              <div>
+                <div class="font-semibold text-white text-sm">
+                  Mark Thompson
+                </div>
+                <div class="text-xs text-[#89938d]">Family Traveler</div>
+              </div>
+              <span
+                class="ml-auto text-[10px] text-[#95d3ba] bg-[#95d3ba]/10 px-2 py-1 rounded-full font-medium"
+                >Verified</span
+              >
+            </div>
+          </div>
+          <div
+            class="glass-card rounded-2xl p-6 reveal hover:-translate-y-1 transition-all"
+            style="transition-delay: 200ms"
+          >
+            <div class="flex gap-0.5 mb-4">
+              {% for i in "12345" %}<span
+                class="material-symbols-outlined text-lg text-[#95d3ba] mat-filled"
+                >star</span
+              >{% endfor %}
+            </div>
+            <p class="text-[#d5e3fd] text-sm leading-relaxed italic mb-5">
+              "I love the Hidden Gems feature. While everyone else was at
+              tourist traps in Rome, the AI found us a secret cellar bistro that
+              served the best pasta I've ever had."
+            </p>
+            <div class="flex items-center gap-3 pt-4 border-t border-white/5">
+              <div
+                class="w-10 h-10 rounded-full bg-[#95d3ba]/20 border border-[#95d3ba]/30 flex items-center justify-center"
+              >
+                <span class="text-[#95d3ba] font-bold text-sm">E</span>
+              </div>
+              <div>
+                <div class="font-semibold text-white text-sm">
+                  Elena Rodriguez
+                </div>
+                <div class="text-xs text-[#89938d]">Solo Adventurer</div>
+              </div>
+              <span
+                class="ml-auto text-[10px] text-[#95d3ba] bg-[#95d3ba]/10 px-2 py-1 rounded-full font-medium"
+                >Verified</span
+              >
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- ── Write a Review (logged-in users only) ─────────────────────── -->
+        {% if user.is_authenticated %}
+        <div class="reveal">
+          <div class="glass-card rounded-3xl p-8 border border-[#95d3ba]/20">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-10 h-10 rounded-full bg-[#95d3ba]/20 border border-[#95d3ba]/30 flex items-center justify-center flex-shrink-0"
+              >
+                <span class="text-[#95d3ba] font-bold text-sm"
+                  >{{ user.username|slice:":1"|upper }}</span
+                >
+              </div>
+              <div>
+                <h3 class="font-bold text-white text-lg">
+                  Share Your Experience
+                </h3>
+                <p class="text-[#89938d] text-sm">
+                  Posting as
+                  <span class="text-[#95d3ba] font-medium"
+                    >{{ user.get_full_name|default:user.username }}</span
+                  >
+                </p>
+              </div>
+              <span
+                class="ml-auto inline-flex items-center gap-1 text-xs text-[#95d3ba] bg-[#95d3ba]/10 px-3 py-1.5 rounded-full font-medium border border-[#95d3ba]/20"
+              >
+                <span class="material-symbols-outlined text-sm mat-filled"
+                  >verified</span
+                >
+                Verified Member
+              </span>
+            </div>
+            <form
+              method="POST"
+              action="{% url 'Landing_page' %}#community"
+              class="space-y-5"
+            >
+              {% csrf_token %}
+              <!-- Star rating (HTML/CSS trick, no JS needed) -->
+              <div>
+                <label class="block text-sm font-semibold text-[#bfc9c3] mb-3"
+                  >Your Rating</label
+                >
+                <div class="star-rating" id="star-rating">
+                  <input
+                    type="radio"
+                    id="star5"
+                    name="review_rating"
+                    value="5"
+                    checked
+                  />
+                  <label
+                    for="star5"
+                    class="material-symbols-outlined mat-filled"
+                    title="5 stars"
+                    >star</label
+                  >
+                  <input
+                    type="radio"
+                    id="star4"
+                    name="review_rating"
+                    value="4"
+                  />
+                  <label
+                    for="star4"
+                    class="material-symbols-outlined mat-filled"
+                    title="4 stars"
+                    >star</label
+                  >
+                  <input
+                    type="radio"
+                    id="star3"
+                    name="review_rating"
+                    value="3"
+                  />
+                  <label
+                    for="star3"
+                    class="material-symbols-outlined mat-filled"
+                    title="3 stars"
+                    >star</label
+                  >
+                  <input
+                    type="radio"
+                    id="star2"
+                    name="review_rating"
+                    value="2"
+                  />
+                  <label
+                    for="star2"
+                    class="material-symbols-outlined mat-filled"
+                    title="2 stars"
+                    >star</label
+                  >
+                  <input
+                    type="radio"
+                    id="star1"
+                    name="review_rating"
+                    value="1"
+                  />
+                  <label
+                    for="star1"
+                    class="material-symbols-outlined mat-filled"
+                    title="1 star"
+                    >star</label
+                  >
+                </div>
+              </div>
+              <!-- Title -->
+              <div>
+                <label
+                  for="review_title"
+                  class="block text-sm font-semibold text-[#bfc9c3] mb-2"
+                  >Review Title</label
+                >
+                <input
+                  type="text"
+                  id="review_title"
+                  name="review_title"
+                  required
+                  maxlength="200"
+                  placeholder="e.g. Amazing trip to Goa!"
+                  class="w-full bg-[#0d1c2f] border border-[#404944] rounded-xl px-4 py-3 text-sm text-white placeholder-[#404944] focus:border-[#95d3ba] focus:ring-1 focus:ring-[#95d3ba]/50 transition-all outline-none"
+                />
+              </div>
+              <!-- Content -->
+              <div>
+                <label
+                  for="review_content"
+                  class="block text-sm font-semibold text-[#bfc9c3] mb-2"
+                  >Your Experience</label
+                >
+                <textarea
+                  id="review_content"
+                  name="review_content"
+                  required
+                  rows="4"
+                  maxlength="1000"
+                  placeholder="Tell the community about your experience with TripMate AI — what did you love most?"
+                  class="w-full bg-[#0d1c2f] border border-[#404944] rounded-xl px-4 py-3 text-sm text-white placeholder-[#404944] focus:border-[#95d3ba] focus:ring-1 focus:ring-[#95d3ba]/50 transition-all outline-none resize-none"
+                ></textarea>
+              </div>
+              <div class="flex items-center justify-between">
+                <p class="text-xs text-[#89938d]">
+                  Your review will be publicly visible after posting.
+                </p>
+                <button
+                  type="submit"
+                  class="inline-flex items-center gap-2 px-6 py-3 bg-[#95d3ba] text-[#003829] rounded-xl font-bold text-sm hover:brightness-110 active:scale-95 transition-all"
+                >
+                  <span class="material-symbols-outlined text-lg mat-filled"
+                    >send</span
+                  >
+                  Post Review
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        <!-- Prompt non-logged-in users to sign in -->
+        <div class="reveal">
+          <div
+            class="glass-card rounded-2xl p-8 border border-[#95d3ba]/10 text-center"
+          >
+            <span
+              class="material-symbols-outlined text-5xl text-[#95d3ba] mat-filled float block mb-4"
+              >rate_review</span
+            >
+            <h3 class="font-bold text-white text-xl mb-2">
+              Share Your Travel Story
+            </h3>
+            <p class="text-[#bfc9c3] mb-6 max-w-md mx-auto">
+              Join our community and write a review to help fellow travelers
+              make better decisions.
+            </p>
+            <div class="flex gap-3 justify-center">
+              <a
+                href="{% url 'register_page' %}"
+                class="px-6 py-3 bg-[#95d3ba] text-[#003829] rounded-xl font-bold text-sm hover:brightness-110 transition-all"
+              >
+                Create Free Account
+              </a>
+              <a
+                href="{% url 'Login_page' %}"
+                class="px-6 py-3 glass border border-white/10 text-white rounded-xl font-semibold text-sm hover:border-[#95d3ba]/30 transition-all"
+              >
+                Sign In to Review
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- ── CTA ────────────────────────────────────────────────────────────── -->
+    <section class="py-24 px-6">
+      <div
+        class="max-w-3xl mx-auto text-center glass-card rounded-3xl p-12 border border-[#95d3ba]/15 reveal"
+      >
+        <span
+          class="material-symbols-outlined text-6xl text-[#95d3ba] mat-filled float block mb-6"
+          >travel_explore</span
+        >
+        <h2 class="text-4xl font-black text-white mb-4">
+          Ready to Plan Your Perfect Trip?
+        </h2>
+        <p class="text-[#bfc9c3] mb-8 text-lg">
+          Join 500,000+ smart travelers already using TripMate AI to explore the
+          world.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="{% url 'register_page' %}"
+            class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#95d3ba] text-[#003829] rounded-2xl font-bold text-lg hover:shadow-2xl hover:shadow-[#95d3ba]/30 hover:-translate-y-1 transition-all"
+          >
+            <span class="material-symbols-outlined mat-filled"
+              >auto_awesome</span
+            >
+            Start for Free — No Credit Card
+          </a>
+          <a
+            href="{% url 'Login_page' %}"
+            class="inline-flex items-center justify-center gap-2 px-8 py-4 glass border border-white/10 text-white rounded-2xl font-semibold text-lg hover:-translate-y-1 transition-all"
+          >
+            <span class="material-symbols-outlined">login</span>
+            Sign In
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+    <footer class="border-t border-white/5" style="background: #030e1c">
+      <div
+        class="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-5 gap-10"
+      >
+        <!-- Brand -->
+        <div class="md:col-span-2">
+          <div class="flex items-center gap-3 mb-5">
+            <span
+              class="material-symbols-outlined text-[#95d3ba] text-3xl mat-filled"
+              >travel_explore</span
+            >
+            <span class="text-xl font-black text-white tracking-tight"
+              >TripMate AI</span
+            >
+          </div>
+          <p class="text-[#89938d] text-sm leading-relaxed mb-6 max-w-xs">
+            Your AI-powered digital travel concierge. We use cutting-edge
+            artificial intelligence to make every journey seamless, smart, and
+            unforgettable.
+          </p>
+          <div class="flex gap-3">
+            <button
+              class="w-9 h-9 glass rounded-xl flex items-center justify-center hover:border-[#95d3ba]/30 hover:text-[#95d3ba] text-[#89938d] transition-all"
+            >
+              <span class="material-symbols-outlined text-base">language</span>
+            </button>
+            <button
+              class="w-9 h-9 glass rounded-xl flex items-center justify-center hover:border-[#95d3ba]/30 hover:text-[#95d3ba] text-[#89938d] transition-all"
+            >
+              <span class="material-symbols-outlined text-base"
+                >alternate_email</span
+              >
+            </button>
+            <button
+              class="w-9 h-9 glass rounded-xl flex items-center justify-center hover:border-[#95d3ba]/30 hover:text-[#95d3ba] text-[#89938d] transition-all"
+            >
+              <span class="material-symbols-outlined text-base">chat</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Platform -->
+        <div>
+          <h4
+            class="font-bold text-white text-sm uppercase tracking-wider mb-5"
+          >
+            Platform
+          </h4>
+          <ul class="space-y-3 text-[#89938d] text-sm">
+            <li>
+              <a
+                href="#features"
+                class="hover:text-[#95d3ba] transition-colors hover:translate-x-1 inline-block transition-transform"
+                >Features</a
+              >
+            </li>
+            <li>
+              <a
+                href="#how-it-works"
+                class="hover:text-[#95d3ba] transition-colors hover:translate-x-1 inline-block transition-transform"
+                >How It Works</a
+              >
+            </li>
+            <li>
+              <a
+                href="{% url 'register_page' %}"
+                class="hover:text-[#95d3ba] transition-colors hover:translate-x-1 inline-block transition-transform"
+                >AI Planner</a
+              >
+            </li>
+            <li>
+              <a
+                href="#community"
+                class="hover:text-[#95d3ba] transition-colors hover:translate-x-1 inline-block transition-transform"
+                >Community</a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <!-- Support -->
+        <div>
+          <h4
+            class="font-bold text-white text-sm uppercase tracking-wider mb-5"
+          >
+            Support
+          </h4>
+          <ul class="space-y-3 text-[#89938d] text-sm">
+            <li>
+              <a href="#" class="hover:text-[#95d3ba] transition-colors"
+                >Help Center</a
+              >
+            </li>
+            <li>
+              <a href="#" class="hover:text-[#95d3ba] transition-colors"
+                >Safety Info</a
+              >
+            </li>
+            <li>
+              <a href="#" class="hover:text-[#95d3ba] transition-colors"
+                >Cancellations</a
+              >
+            </li>
+            <li>
+              <a href="#" class="hover:text-[#95d3ba] transition-colors"
+                >Contact Us</a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div>
+          <h4
+            class="font-bold text-white text-sm uppercase tracking-wider mb-5"
+          >
+            Legal
+          </h4>
+          <ul class="space-y-3 text-[#89938d] text-sm">
+            <li>
+              <a href="#" class="hover:text-[#95d3ba] transition-colors"
+                >Privacy Policy</a
+              >
+            </li>
+            <li>
+              <a href="#" class="hover:text-[#95d3ba] transition-colors"
+                >Terms of Service</a
+              >
+            </li>
+            <li>
+              <a href="#" class="hover:text-[#95d3ba] transition-colors"
+                >Cookie Policy</a
+              >
+            </li>
+            <li>
+              <a href="#" class="hover:text-[#95d3ba] transition-colors"
+                >Data Protection</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="border-t border-white/5">
+        <div
+          class="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[#89938d] text-sm"
+        >
+          <p>© 2025 TripMate AI. Built with ❤️ for travelers everywhere.</p>
+          <div class="flex items-center gap-2">
+            <span
+              class="material-symbols-outlined text-[#95d3ba] text-base mat-filled"
+              >verified_user</span
+            >
+            <span>Secured &amp; Trusted by 500K+ Travelers</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ── Scripts ─────────────────────────────────────────────────────────── -->
+    <script>
+      // Scroll reveal
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("visible");
+            }
+          });
+        },
+        { threshold: 0.12 },
+      );
+      document
+        .querySelectorAll(".reveal")
+        .forEach((el) => observer.observe(el));
+
+      // Nav scroll effect
+      const nav = document.getElementById("main-nav");
+      window.addEventListener("scroll", () => {
+        nav.classList.toggle("scrolled", window.scrollY > 50);
+      });
+
+      // Smooth scroll for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach((a) => {
+        a.addEventListener("click", (e) => {
+          const target = document.querySelector(a.getAttribute("href"));
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      });
+
+      // Star rating: highlight on hover/select
+      const labels = document.querySelectorAll(".star-rating label");
+      labels.forEach((label, i) => {
+        label.addEventListener("mouseenter", () => {
+          labels.forEach(
+            (l, j) => (l.style.color = j >= i ? "#95d3ba" : "#404944"),
+          );
+        });
+        label.addEventListener("mouseleave", () => {
+          labels.forEach((l) => (l.style.color = ""));
+        });
+      });
+
+      // Auto-dismiss flash messages
+      setTimeout(() => {
+        document.querySelectorAll("[data-flash]").forEach((el) => {
+          el.style.opacity = "0";
+          el.style.transition = "opacity 0.5s";
+          setTimeout(() => el.remove(), 500);
+        });
+      }, 5000);
+    </script>
+  </body>
+</html>

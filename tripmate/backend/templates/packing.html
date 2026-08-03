@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Packing List{% endblock %}
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div><h2 class="text-2xl font-bold text-on-surface">Packing List</h2><p class="text-on-surface-variant text-sm mt-1">AI-powered smart packing checklist</p></div>
+    {% if selected_trip %}
+    <button onclick="generatePacking()" id="gen-btn" class="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-xl font-semibold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+      <span class="material-symbols-outlined text-[18px] mat-filled">auto_awesome</span> Generate AI List
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+    <!-- Trip Selector -->
+    <div class="space-y-3">
+      <div class="glass-panel rounded-2xl p-5">
+        <h4 class="font-bold text-on-surface mb-3 text-sm">Select Trip</h4>
+        <div class="space-y-1.5">
+          {% for trip in trips %}
+          <a href="?trip={{ trip.id }}" class="flex items-center gap-2 p-2.5 rounded-xl text-xs {% if selected_trip.id == trip.id %}bg-primary-container/20 border border-primary/30 text-primary{% else %}bg-surface-container/50 text-on-surface-variant hover:border-outline-variant border border-transparent{% endif %} transition-all block">
+            <span class="material-symbols-outlined text-[14px] mat-filled">flight_takeoff</span>
+            <span class="truncate flex-1">{{ trip.destination }}</span>
+          </a>
+          {% empty %}
+          <p class="text-xs text-on-surface-variant text-center py-4">No trips yet</p>
+          {% endfor %}
+        </div>
+      </div>
+      {% if packing %}
+      <div class="glass-panel rounded-2xl p-4 text-center">
+        <p class="text-xs text-on-surface-variant">Progress</p>
+        <div id="overall-progress" class="text-3xl font-bold text-primary mt-1">0%</div>
+        <div class="mt-2 h-2 bg-surface-container rounded-full overflow-hidden">
+          <div id="progress-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width:0%"></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Packing List -->
+    <div class="xl:col-span-3">
+      {% if packing %}
+      <div class="space-y-4" id="packing-container">
+        {% for category, items in packing.items.items %}
+        <div class="glass-panel rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-bold text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[18px]">{% if category == 'Clothes' %}checkroom{% elif category == 'Electronics' %}devices{% elif category == 'Documents' %}folder{% elif category == 'Medicines' %}medical_services{% elif category == 'Toiletries' %}soap{% else %}category{% endif %}</span>
+              {{ category }}
+              <span class="text-xs font-normal text-on-surface-variant" id="{{ category|slugify }}-count"></span>
+            </h4>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {% for item in items %}
+            <label class="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-surface-variant/30 transition-all group">
+              <input type="checkbox" class="packing-item w-4 h-4 accent-primary rounded" data-category="{{ category }}" {% if item.checked %}checked{% endif %} onchange="updateItem(this, '{{ category }}', '{{ item.name|escapejs }}')" />
+              <span class="text-sm {% if item.checked %}line-through text-outline{% else %}text-on-surface{% endif %} group-has-[:checked]:line-through group-has-[:checked]:text-outline transition-all">
+                {{ item.name }}
+                {% if item.essential %}<span class="text-xs text-error ml-1">*</span>{% endif %}
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% elif selected_trip %}
+      <div class="glass-panel rounded-2xl p-12 text-center">
+        <span class="material-symbols-outlined text-5xl text-outline mat-filled block mb-4">backpack</span>
+        <p class="font-semibold text-on-surface">No packing list yet</p>
+        <p class="text-xs text-on-surface-variant mt-1">Generate a smart AI packing list for {{ selected_trip.destination }}</p>
+        <button onclick="generatePacking()" class="mt-4 px-5 py-2.5 bg-primary text-on-primary rounded-xl font-semibold text-sm hover:brightness-110 transition-all">
+          <span class="material-symbols-outlined text-[16px] mat-filled">auto_awesome</span> Generate Now
+        </button>
+      </div>
+      {% else %}
+      <div class="glass-panel rounded-2xl p-12 text-center">
+        <span class="material-symbols-outlined text-5xl text-outline mat-filled block mb-4">backpack</span>
+        <p class="font-semibold text-on-surface">Select a trip to generate your packing list</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+{% if packing %}
+// Init progress
+function updateProgress() {
+  const all = document.querySelectorAll('.packing-item');
+  const checked = document.querySelectorAll('.packing-item:checked');
+  const pct = all.length ? Math.round(checked.length/all.length*100) : 0;
+  document.getElementById('overall-progress').textContent = pct + '%';
+  document.getElementById('progress-bar').style.width = pct + '%';
+  // Per category count
+  document.querySelectorAll('.packing-item').forEach(el => {
+    const cat = el.dataset.category;
+    const slug = cat.toLowerCase().replace(/\s+/g,'-');
+    const catItems = document.querySelectorAll(`.packing-item[data-category="${cat}"]`);
+    const catChecked = document.querySelectorAll(`.packing-item[data-category="${cat}"]:checked`);
+    const el2 = document.getElementById(`${slug}-count`);
+    if (el2) el2.textContent = `(${catChecked.length}/${catItems.length})`;
+  });
+}
+updateProgress();
+
+async function updateItem(checkbox, category, itemName) {
+  updateProgress();
+  // Update label style
+  const label = checkbox.closest('label');
+  const textSpan = label.querySelector('span');
+  if (checkbox.checked) { textSpan.classList.add('line-through','text-outline'); textSpan.classList.remove('text-on-surface'); }
+  else { textSpan.classList.remove('line-through','text-outline'); textSpan.classList.add('text-on-surface'); }
+  // Sync to backend
+  // (In production, batch updates; here we just update on check)
+}
+{% endif %}
+
+{% if selected_trip %}
+async function generatePacking() {
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[16px]">refresh</span> Generating...';
+  const resp = await fetch('/api/packing/{{ selected_trip.id }}/', { method:'POST', headers:{'X-CSRFToken':CSRF} });
+  if (resp.ok) { showToast('Packing list generated!', 'success'); setTimeout(() => location.reload(), 800); }
+  else { showToast('Generation failed', 'error'); btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined">auto_awesome</span> Generate AI List'; }
+}
+{% endif %}
+</script>
+{% endblock %}

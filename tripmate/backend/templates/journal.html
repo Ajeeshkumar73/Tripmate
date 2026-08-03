@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Travel Journal{% endblock %}
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <div class="flex items-center justify-between">
+    <div><h2 class="text-2xl font-bold text-on-surface">Travel Journal</h2><p class="text-on-surface-variant text-sm mt-1">Capture your travel memories and moments</p></div>
+    <button onclick="document.getElementById('journal-modal').classList.remove('hidden')" class="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-xl font-semibold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+      <span class="material-symbols-outlined text-[18px]">edit_note</span> New Entry
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Journal Entries -->
+    <div class="xl:col-span-2 space-y-4">
+      {% if entries %}
+        {% for entry in entries %}
+        <div class="glass-panel rounded-2xl p-5 hover:border-primary/20 border border-transparent transition-all">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-3">
+              {% if entry.mood %}
+              <span class="text-2xl">{% if entry.mood == 'happy' %}😊{% elif entry.mood == 'excited' %}🤩{% elif entry.mood == 'relaxed' %}😌{% elif entry.mood == 'tired' %}😴{% else %}😐{% endif %}</span>
+              {% endif %}
+              <div>
+                <h3 class="font-bold text-on-surface">{{ entry.title }}</h3>
+                <p class="text-xs text-on-surface-variant mt-0.5 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[12px]">calendar_today</span> {{ entry.entry_date|date:"M d, Y" }}
+                  {% if entry.location %}<span class="material-symbols-outlined text-[12px]">location_on</span>{{ entry.location }}{% endif %}
+                  {% if entry.trip %}<span class="text-primary">· {{ entry.trip.destination }}</span>{% endif %}
+                </p>
+              </div>
+            </div>
+            <button class="text-on-surface-variant hover:text-error transition-colors p-1" onclick="deleteEntry({{ entry.id }})"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+          </div>
+          <p class="mt-3 text-sm text-on-surface-variant leading-relaxed line-clamp-3">{{ entry.content }}</p>
+          {% if entry.ai_generated_summary %}
+          <div class="mt-3 p-3 bg-primary-container/10 rounded-xl border border-primary/10">
+            <p class="text-xs font-semibold text-primary flex items-center gap-1 mb-1"><span class="material-symbols-outlined text-[12px] mat-filled">auto_awesome</span>AI Summary</p>
+            <p class="text-xs text-on-surface-variant">{{ entry.ai_generated_summary|truncatechars:200 }}</p>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="glass-panel rounded-2xl p-12 text-center">
+        <span class="material-symbols-outlined text-5xl text-outline mat-filled block mb-4">auto_stories</span>
+        <p class="font-semibold text-on-surface">No journal entries yet</p>
+        <p class="text-xs text-on-surface-variant mt-1">Start writing about your adventures!</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Photo Gallery + Sidebar -->
+    <div class="space-y-4">
+      {% if photos %}
+      <div class="glass-panel rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="font-bold text-on-surface text-sm">Travel Photos</h4>
+          <span class="text-xs text-on-surface-variant">{{ photos|length }} photos</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          {% for photo in photos %}
+          <div class="aspect-square rounded-xl overflow-hidden">
+            <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" class="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer" />
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      <div class="glass-panel rounded-2xl p-5">
+        <h4 class="font-bold text-on-surface text-sm mb-3">Quick Stats</h4>
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm"><span class="text-on-surface-variant">Total Entries</span><span class="font-semibold text-on-surface">{{ entries|length }}</span></div>
+          <div class="flex justify-between text-sm"><span class="text-on-surface-variant">Photos</span><span class="font-semibold text-on-surface">{{ photos|length }}</span></div>
+          <div class="flex justify-between text-sm"><span class="text-on-surface-variant">Trips Covered</span><span class="font-semibold text-on-surface">{{ trips|length }}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Entry Modal -->
+<div id="journal-modal" class="hidden fixed inset-0 bg-background/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+  <div class="glass-panel rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-on-surface text-lg">New Journal Entry</h3>
+      <button onclick="document.getElementById('journal-modal').classList.add('hidden')" class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <form id="journal-form" class="space-y-4">
+      <div><label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Title *</label><input id="j-title" required class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface focus:border-primary transition-all" placeholder="Day 1: Arriving in Goa..." /></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Date</label><input id="j-date" type="date" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface focus:border-primary transition-all" /></div>
+        <div><label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Mood</label>
+          <select id="j-mood" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface focus:border-primary transition-all">
+            <option value="">Select mood</option>
+            <option value="happy">😊 Happy</option><option value="excited">🤩 Excited</option><option value="relaxed">😌 Relaxed</option><option value="tired">😴 Tired</option><option value="neutral">😐 Neutral</option>
+          </select>
+        </div>
+      </div>
+      <div><label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Location</label><input id="j-location" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface focus:border-primary transition-all" placeholder="e.g. Baga Beach, Goa" /></div>
+      <div><label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Trip</label>
+        <select id="j-trip" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface focus:border-primary transition-all">
+          <option value="">No trip</option>{% for trip in trips %}<option value="{{ trip.id }}">{{ trip.destination }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Your Story *</label><textarea id="j-content" required rows="6" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface focus:border-primary resize-none transition-all" placeholder="Write about your experiences, what you saw, felt, and discovered..."></textarea></div>
+      <button type="submit" class="w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-sm hover:brightness-110 transition-all">Save Entry</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1]||'';
+document.getElementById('j-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('journal-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const resp = await fetch('/api/journal/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({title:document.getElementById('j-title').value,entry_date:document.getElementById('j-date').value,mood:document.getElementById('j-mood').value,location:document.getElementById('j-location').value,trip:document.getElementById('j-trip').value||null,content:document.getElementById('j-content').value})});
+  if(resp.ok){showToast('Journal entry saved!','success');setTimeout(()=>location.reload(),800);}else showToast('Failed to save','error');
+});
+async function deleteEntry(id){if(!confirm('Delete this entry?'))return;const r=await fetch(`/api/journal/${id}/`,{method:'DELETE',headers:{'X-CSRFToken':CSRF}});if(r.ok||r.status===204){location.reload();}}
+</script>
+{% endblock %}

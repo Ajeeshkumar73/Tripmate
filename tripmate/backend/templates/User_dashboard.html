@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <!-- Welcome Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-on-surface">Welcome back, <span class="text-primary">{{ user.first_name|default:user.username }}</span>! 👋</h2>
+      <p class="text-on-surface-variant mt-1 text-sm">Your AI has new recommendations waiting for your next adventure.</p>
+    </div>
+    <a href="{% url 'ai_planner' %}" class="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all">
+      <span class="material-symbols-outlined text-[18px]">auto_awesome</span> Plan New Trip
+    </a>
+  </div>
+
+  <!-- Stats Bento Grid -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="glass-panel p-5 rounded-2xl flex flex-col gap-3 hover:border-primary/20 border border-transparent transition-all">
+      <div class="flex justify-between items-center">
+        <div class="w-10 h-10 bg-primary-container/30 rounded-xl flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary mat-filled">luggage</span>
+        </div>
+        <span class="text-xs font-semibold px-2 py-0.5 bg-primary-container/20 text-primary rounded-full">Active</span>
+      </div>
+      <div>
+        <p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Total Trips</p>
+        <p class="text-2xl font-bold text-on-surface mt-0.5">{{ total_trips }}</p>
+      </div>
+    </div>
+    <div class="glass-panel p-5 rounded-2xl flex flex-col gap-3 hover:border-tertiary/20 border border-transparent transition-all">
+      <div class="flex justify-between items-center">
+        <div class="w-10 h-10 bg-tertiary-container/40 rounded-xl flex items-center justify-center">
+          <span class="material-symbols-outlined text-tertiary mat-filled">public</span>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Countries Visited</p>
+        <p class="text-2xl font-bold text-on-surface mt-0.5">{{ profile.countries_visited }}</p>
+      </div>
+    </div>
+    <div class="glass-panel p-5 rounded-2xl flex flex-col gap-3 hover:border-primary/20 border border-transparent transition-all">
+      <div class="w-10 h-10 bg-primary-container/30 rounded-xl flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary mat-filled">account_balance_wallet</span>
+      </div>
+      <div>
+        <p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Total Spent</p>
+        <p class="text-2xl font-bold text-on-surface mt-0.5">₹{{ total_spent|floatformat:0 }}</p>
+      </div>
+    </div>
+    <div class="glass-panel p-5 rounded-2xl flex flex-col gap-3 hover:border-secondary/20 border border-transparent transition-all">
+      <div class="w-10 h-10 bg-secondary-container/40 rounded-xl flex items-center justify-center">
+        <span class="material-symbols-outlined text-secondary mat-filled">calendar_month</span>
+      </div>
+      <div>
+        <p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Travel Days</p>
+        <p class="text-2xl font-bold text-on-surface mt-0.5">{{ profile.total_trips }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Quick Trip Planner -->
+    <div class="xl:col-span-2 glass-panel rounded-2xl overflow-hidden">
+      <div class="relative h-40">
+        <div class="absolute inset-0 bg-gradient-to-br from-primary-container/40 to-tertiary-container/40"></div>
+        <div class="absolute inset-0 flex items-end p-5">
+          <div>
+            <h3 class="text-lg font-bold text-on-surface">Plan Your Next Adventure</h3>
+            <p class="text-sm text-on-surface-variant">AI-powered itineraries tailored to you.</p>
+          </div>
+        </div>
+        <span class="material-symbols-outlined absolute top-4 right-4 text-primary/30 text-7xl mat-filled float-anim">flight_takeoff</span>
+      </div>
+      <form method="POST" action="{% url 'user_page' %}" class="p-5">
+        {% csrf_token %}
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">From</label>
+            <input name="start_point" value="{{ source|default:'' }}" class="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface placeholder:text-outline/60 transition-all" placeholder="Departure city" type="text" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">To</label>
+            <input name="end_point" value="{{ destination|default:'' }}" class="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface placeholder:text-outline/60 transition-all" placeholder="Destination" type="text" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Travelers</label>
+            <input name="people" value="{{ people|default:1 }}" type="number" min="1" class="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Departure</label>
+            <input name="start_date" value="{{ start_date|default:'' }}" type="date" class="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Return</label>
+            <input name="end_date" value="{{ end_date|default:'' }}" type="date" class="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Budget (₹)</label>
+            <input name="budget" value="{{ budget|default:'' }}" type="number" placeholder="50000" class="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Transport</label>
+            <select name="vehicle" class="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all">
+              <option value="best">Best Option</option>
+              <option value="car">Car</option>
+              <option value="bike">Bike</option>
+              <option value="train">Train</option>
+              <option value="bus">Bus</option>
+              <option value="flight">Flight</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Travel Type</label>
+            <select name="travel_type" class="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all">
+              <option value="solo">Solo</option>
+              <option value="couple">Couple</option>
+              <option value="family">Family</option>
+              <option value="friends">Friends</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button type="submit" id="plan-btn" class="w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 transition-all">
+              <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+              <span id="plan-btn-text">Generate Trip</span>
+            </button>
+          </div>
+        </div>
+        <!-- Interests -->
+        <div class="mt-4">
+          <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Interests</label>
+          <div class="flex flex-wrap gap-2">
+            {% for interest in "Adventure,Nature,Beaches,Mountains,Wildlife,Photography,Shopping,History,Religious Places,Nightlife,Food Tourism,Luxury,Family,Solo,Couple,Friends"|split:"," %}
+            <label class="cursor-pointer">
+              <input type="checkbox" name="interests" value="{{ interest }}" class="sr-only peer" {% if interest in interests %}checked{% endif %} />
+              <span class="peer-checked:bg-primary peer-checked:text-on-primary px-3 py-1 rounded-full text-xs font-medium border border-outline-variant text-on-surface-variant hover:border-primary transition-all block">{{ interest }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Upcoming Trips Sidebar -->
+    <div class="glass-panel rounded-2xl p-5 flex flex-col gap-4">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-on-surface">Upcoming Trips</h3>
+        <a href="{% url 'trips_page' %}" class="text-xs text-primary hover:underline">View All</a>
+      </div>
+      {% if upcoming_trips %}
+        {% for trip in upcoming_trips %}
+        <a href="{% url 'trip_detail' trip.id %}" class="block p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all border border-outline-variant/50 hover:border-primary/30 group">
+          <div class="flex justify-between items-start mb-2">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[18px] mat-filled">flight_takeoff</span>
+              <span class="font-semibold text-on-surface text-sm">{{ trip.destination }}</span>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full font-medium
+              {% if trip.status == 'upcoming' %}bg-primary-container/30 text-primary
+              {% elif trip.status == 'active' %}bg-tertiary-container/40 text-tertiary
+              {% else %}bg-surface-variant text-on-surface-variant{% endif %}">
+              {{ trip.get_status_display }}
+            </span>
+          </div>
+          <p class="text-xs text-on-surface-variant">{{ trip.start_date|date:"M d" }} – {{ trip.end_date|date:"M d, Y" }}</p>
+          <div class="flex items-center gap-3 mt-2 text-xs text-outline">
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">people</span> {{ trip.num_travelers }}</span>
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">payments</span> ₹{{ trip.budget|floatformat:0 }}</span>
+          </div>
+        </a>
+        {% endfor %}
+      {% else %}
+        <div class="flex-1 flex flex-col items-center justify-center text-center py-8 text-on-surface-variant">
+          <span class="material-symbols-outlined text-5xl text-outline mb-3">luggage</span>
+          <p class="font-medium text-sm">No upcoming trips</p>
+          <p class="text-xs text-outline mt-1">Plan your next adventure above!</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Map + Trip Details Row (shown after form submission) -->
+  {% if source %}
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+    <!-- Trip Details -->
+    <div class="lg:col-span-2 glass-panel rounded-2xl p-5 space-y-4">
+      <h3 class="font-bold text-on-surface border-b border-outline-variant pb-3">Trip Details</h3>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary mat-filled">my_location</span>
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wider">From</p>
+            <p class="font-semibold text-on-surface">{{ source }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-secondary mat-filled">location_on</span>
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wider">To</p>
+            <p class="font-semibold text-on-surface">{{ destination }}</p>
+          </div>
+        </div>
+        {% if distance %}<div class="grid grid-cols-2 gap-3 pt-1">
+          <div class="bg-surface-container rounded-xl p-3 text-center">
+            <p class="text-xs text-on-surface-variant">Distance</p>
+            <p class="font-bold text-primary text-lg">{{ distance }} km</p>
+          </div>
+          <div class="bg-surface-container rounded-xl p-3 text-center">
+            <p class="text-xs text-on-surface-variant">Duration</p>
+            <p class="font-bold text-primary text-lg">{{ duration }}h</p>
+          </div>
+        </div>{% endif %}
+        <div class="grid grid-cols-2 gap-3">
+          <div><p class="text-xs text-on-surface-variant">Start</p><p class="font-medium text-on-surface">{{ start_date }}</p></div>
+          <div><p class="text-xs text-on-surface-variant">End</p><p class="font-medium text-on-surface">{{ end_date }}</p></div>
+          <div><p class="text-xs text-on-surface-variant">Budget</p><p class="font-medium text-primary">₹{{ budget }}</p></div>
+          <div><p class="text-xs text-on-surface-variant">Travelers</p><p class="font-medium text-on-surface">{{ people }}</p></div>
+        </div>
+        {% if interests %}
+        <div>
+          <p class="text-xs text-on-surface-variant mb-2">Interests</p>
+          <div class="flex flex-wrap gap-1.5">
+            {% for i in interests %}<span class="px-2 py-0.5 bg-primary-container/20 text-primary text-xs rounded-full border border-primary/20">{{ i }}</span>{% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Map -->
+    <div class="lg:col-span-3 glass-panel rounded-2xl overflow-hidden h-80">
+      <div id="dashboard-map" class="h-full w-full"></div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Quick Actions Grid -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    {% for action in actions %}{% endfor %}
+    <a href="{% url 'map_explorer' %}" class="glass-panel p-4 rounded-2xl flex flex-col items-center gap-3 text-center hover:border-primary/30 border border-transparent transition-all group">
+      <div class="w-12 h-12 bg-primary-container/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-primary text-2xl mat-filled">map</span></div>
+      <span class="text-sm font-semibold text-on-surface">Explore Map</span>
+    </a>
+    <a href="{% url 'weather' %}" class="glass-panel p-4 rounded-2xl flex flex-col items-center gap-3 text-center hover:border-primary/30 border border-transparent transition-all group">
+      <div class="w-12 h-12 bg-tertiary-container/40 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-tertiary text-2xl mat-filled">wb_sunny</span></div>
+      <span class="text-sm font-semibold text-on-surface">Weather</span>
+    </a>
+    <a href="{% url 'expenses' %}" class="glass-panel p-4 rounded-2xl flex flex-col items-center gap-3 text-center hover:border-primary/30 border border-transparent transition-all group">
+      <div class="w-12 h-12 bg-secondary-container/40 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-secondary text-2xl mat-filled">payments</span></div>
+      <span class="text-sm font-semibold text-on-surface">Expenses</span>
+    </a>
+    <a href="{% url 'emergency' %}" class="glass-panel p-4 rounded-2xl flex flex-col items-center gap-3 text-center hover:border-error/30 border border-transparent transition-all group">
+      <div class="w-12 h-12 bg-error-container/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-error text-2xl mat-filled">emergency</span></div>
+      <span class="text-sm font-semibold text-on-surface">Emergency</span>
+    </a>
+  </div>
+
+  <!-- Recent Expenses + Bookmarks -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="glass-panel rounded-2xl p-5">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-on-surface">Recent Expenses</h3>
+        <a href="{% url 'expenses' %}" class="text-xs text-primary hover:underline">View All</a>
+      </div>
+      {% if recent_expenses %}
+        <div class="space-y-3">
+          {% for exp in recent_expenses %}
+          <div class="flex items-center justify-between py-2 border-b border-outline-variant/30 last:border-0">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-surface-container rounded-lg flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary text-[16px]">{% if exp.category == 'food' %}restaurant{% elif exp.category == 'hotel' %}hotel{% elif exp.category == 'taxi' %}local_taxi{% elif exp.category == 'flight' %}flight{% else %}payments{% endif %}</span>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-on-surface">{{ exp.title }}</p>
+                <p class="text-xs text-on-surface-variant">{{ exp.date|date:"M d" }}</p>
+              </div>
+            </div>
+            <span class="font-semibold text-sm text-error">-₹{{ exp.amount|floatformat:0 }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-8 text-on-surface-variant">
+          <span class="material-symbols-outlined text-4xl text-outline">receipt_long</span>
+          <p class="text-sm mt-2">No expenses yet</p>
+        </div>
+      {% endif %}
+    </div>
+    <div class="glass-panel rounded-2xl p-5">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-on-surface">Saved Places</h3>
+        <span class="text-xs text-on-surface-variant">{{ bookmarks|length }} saved</span>
+      </div>
+      {% if bookmarks %}
+        <div class="space-y-3">
+          {% for bm in bookmarks %}
+          <div class="flex items-center gap-3 py-2 border-b border-outline-variant/30 last:border-0">
+            <div class="w-8 h-8 bg-primary-container/30 rounded-lg flex items-center justify-center">
+              <span class="material-symbols-outlined text-primary text-[16px] mat-filled">bookmark</span>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-on-surface">{{ bm.name }}</p>
+              {% if bm.notes %}<p class="text-xs text-on-surface-variant">{{ bm.notes|truncatechars:40 }}</p>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-8 text-on-surface-variant">
+          <span class="material-symbols-outlined text-4xl text-outline">bookmark_border</span>
+          <p class="text-sm mt-2">No saved places yet</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if source %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const sourceLat = {{ source_lat|default:"20.5937" }};
+  const sourceLon = {{ source_lon|default:"78.9629" }};
+  const destLat = {{ destination_lat|default:"null" }};
+  const destLon = {{ destination_lon|default:"null" }};
+  const routeCoords = {{ route|safe }};
+
+  const map = L.map('dashboard-map').setView([sourceLat, sourceLon], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  const srcIcon = L.divIcon({ html: '<span class="material-symbols-outlined" style="font-size:28px;color:#95d3ba;text-shadow:0 2px 8px rgba(0,0,0,0.5)">my_location</span>', iconSize: [28,28], className: '' });
+  const dstIcon = L.divIcon({ html: '<span class="material-symbols-outlined" style="font-size:32px;color:#ffb4ab;text-shadow:0 2px 8px rgba(0,0,0,0.5)">location_on</span>', iconSize: [32,32], className: '' });
+
+  const srcMarker = L.marker([sourceLat, sourceLon], {icon: srcIcon}).addTo(map).bindPopup('<b>From:</b> {{ source|escapejs }}');
+  if (destLat && destLon) {
+    const dstMarker = L.marker([destLat, destLon], {icon: dstIcon}).addTo(map).bindPopup('<b>To:</b> {{ destination|escapejs }}');
+    if (routeCoords && routeCoords.length > 0) {
+      const line = L.polyline(routeCoords, {color:'#95d3ba', weight:5, opacity:0.85}).addTo(map);
+      map.fitBounds(line.getBounds().pad(0.1));
+    } else {
+      const line = L.polyline([[sourceLat,sourceLon],[destLat,destLon]], {color:'#95d3ba',weight:4,opacity:0.7,dashArray:'8,8'}).addTo(map);
+      map.fitBounds(L.featureGroup([srcMarker,dstMarker]).getBounds().pad(0.15));
+    }
+  }
+});
+</script>
+{% endif %}
+<script>
+// Loading animation for form submit
+document.querySelector('form').addEventListener('submit', function() {
+  const btn = document.getElementById('plan-btn');
+  const txt = document.getElementById('plan-btn-text');
+  btn.disabled = true;
+  btn.classList.add('opacity-80');
+  txt.textContent = 'Creating Trip...';
+});
+</script>
+{% endblock %}

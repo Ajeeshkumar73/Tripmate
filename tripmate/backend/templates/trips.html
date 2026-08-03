@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}My Trips{% endblock %}
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-on-surface">My Trips</h2>
+      <p class="text-on-surface-variant text-sm mt-1">All your planned and completed adventures</p>
+    </div>
+    <a href="{% url 'ai_planner' %}" class="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-xl font-semibold text-sm hover:-translate-y-0.5 transition-all shadow-lg shadow-primary/20">
+      <span class="material-symbols-outlined text-[18px]">add</span> New Trip
+    </a>
+  </div>
+
+  <!-- Status Filters -->
+  <div class="flex gap-2 flex-wrap">
+    <a href="{% url 'trips_page' %}" class="px-4 py-2 rounded-xl text-sm font-medium border {% if not status_filter %}border-primary bg-primary-container/20 text-primary{% else %}border-outline-variant text-on-surface-variant hover:border-primary{% endif %} transition-all">All</a>
+    {% for val, label in status_choices %}
+    <a href="?status={{ val }}" class="px-4 py-2 rounded-xl text-sm font-medium border {% if status_filter == val %}border-primary bg-primary-container/20 text-primary{% else %}border-outline-variant text-on-surface-variant hover:border-primary{% endif %} transition-all">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  <!-- Trips Grid -->
+  {% if trips %}
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    {% for trip in trips %}
+    <a href="{% url 'trip_detail' trip.id %}" class="glass-panel rounded-2xl overflow-hidden hover:border-primary/30 border border-transparent transition-all group block">
+      <div class="h-36 bg-gradient-to-br
+        {% if trip.status == 'upcoming' %}from-primary-container/40 to-tertiary-container/30
+        {% elif trip.status == 'active' %}from-tertiary-container/40 to-primary-container/30
+        {% elif trip.status == 'completed' %}from-surface-variant to-surface-container
+        {% else %}from-surface-container to-surface-container-low{% endif %}
+        relative overflow-hidden">
+        <span class="material-symbols-outlined absolute right-4 top-4 text-7xl opacity-10 mat-filled text-on-surface">flight_takeoff</span>
+        <div class="absolute inset-0 p-4 flex flex-col justify-between">
+          <div class="flex justify-between items-start">
+            <span class="text-xs px-2.5 py-1 rounded-full font-semibold
+              {% if trip.status == 'upcoming' %}bg-primary-container/60 text-primary
+              {% elif trip.status == 'active' %}bg-tertiary-container/60 text-tertiary
+              {% elif trip.status == 'completed' %}bg-surface-variant/80 text-on-surface-variant
+              {% elif trip.status == 'planning' %}bg-secondary-container/60 text-secondary
+              {% else %}bg-error-container/60 text-error{% endif %}">
+              {{ trip.get_status_display }}
+            </span>
+            {% if trip.ai_generated %}
+            <span class="text-xs px-2 py-0.5 bg-primary/20 text-primary rounded-full font-medium flex items-center gap-1">
+              <span class="material-symbols-outlined text-[10px] mat-filled">auto_awesome</span> AI
+            </span>
+            {% endif %}
+          </div>
+          <div>
+            <h3 class="text-xl font-black text-on-surface">{{ trip.destination }}</h3>
+            <p class="text-xs text-on-surface-variant">from {{ trip.source }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="p-4 space-y-3">
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-surface-container/50 rounded-xl p-2">
+            <p class="text-xs text-on-surface-variant">Days</p>
+            <p class="font-bold text-on-surface">{{ trip.duration_days }}</p>
+          </div>
+          <div class="bg-surface-container/50 rounded-xl p-2">
+            <p class="text-xs text-on-surface-variant">People</p>
+            <p class="font-bold text-on-surface">{{ trip.num_travelers }}</p>
+          </div>
+          <div class="bg-surface-container/50 rounded-xl p-2">
+            <p class="text-xs text-on-surface-variant">Budget</p>
+            <p class="font-bold text-primary text-xs">₹{{ trip.budget|floatformat:0 }}</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-xs text-on-surface-variant">
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">calendar_month</span> {{ trip.start_date|date:"M d" }} – {{ trip.end_date|date:"M d, Y" }}</span>
+          <span class="flex items-center gap-1 text-primary group-hover:gap-2 transition-all">View <span class="material-symbols-outlined text-[14px]">arrow_forward</span></span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="glass-panel rounded-2xl p-16 text-center">
+    <span class="material-symbols-outlined text-7xl text-outline mat-filled block mb-4">luggage</span>
+    <h3 class="text-xl font-bold text-on-surface">No trips yet</h3>
+    <p class="text-on-surface-variant mt-2 text-sm">Start planning your first adventure with AI!</p>
+    <a href="{% url 'ai_planner' %}" class="mt-6 inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-semibold hover:brightness-110 transition-all">
+      <span class="material-symbols-outlined mat-filled">auto_awesome</span> Plan with AI
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

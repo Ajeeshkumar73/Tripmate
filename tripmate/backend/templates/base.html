@@ -1,0 +1,336 @@
+<!doctype html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}TripMate AI{% endblock %} | Smart Travel Planner</title>
+    <meta name="description" content="{% block meta_description %}AI-powered travel planner and assistant{% endblock %}" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary": "#003829", "inverse-primary": "#2b6954",
+              "on-secondary-container": "#adb4ce", tertiary: "#a8cfbc",
+              "on-tertiary-fixed": "#002115", secondary: "#bec6e0",
+              "on-error-container": "#ffdad6", "surface-container-highest": "#273649",
+              "surface-container": "#122033", "on-tertiary": "#113729",
+              "on-surface-variant": "#bfc9c3", "secondary-fixed": "#dae2fd",
+              "secondary-container": "#3f465c", "inverse-surface": "#d5e3fd",
+              "surface-container-high": "#1c2b3e", "outline-variant": "#404944",
+              "primary-fixed": "#b0f0d6", "on-tertiary-container": "#93baa7",
+              "surface-container-lowest": "#010f21", surface: "#051426",
+              "on-primary-fixed-variant": "#0b513d", "tertiary-fixed": "#c3ecd7",
+              "surface-container-low": "#0d1c2f", error: "#ffb4ab",
+              "on-secondary-fixed": "#131b2e", "primary-container": "#064e3b",
+              "surface-tint": "#95d3ba", outline: "#89938d",
+              "on-surface": "#d5e3fd", "tertiary-fixed-dim": "#a8cfbc",
+              "surface-variant": "#273649", "on-error": "#690005",
+              "surface-bright": "#2c3a4e", background: "#051426",
+              "on-primary-fixed": "#002117", "inverse-on-surface": "#233144",
+              "on-background": "#d5e3fd", "on-secondary-fixed-variant": "#3f465c",
+              "surface-dim": "#051426", "on-secondary": "#283044",
+              primary: "#95d3ba", "error-container": "#93000a",
+              "primary-fixed-dim": "#95d3ba", "on-tertiary-fixed-variant": "#294e3f",
+              "on-primary-container": "#80bea6", "secondary-fixed-dim": "#bec6e0",
+              "tertiary-container": "#274b3c",
+            },
+            borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+            spacing: {
+              xs: "4px", sm: "8px", gutter: "24px", md: "16px", lg: "24px",
+              xl: "40px", "margin-desktop": "64px", "margin-mobile": "16px", base: "4px",
+            },
+            fontFamily: { sans: ["Inter", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+    <style>
+      * { font-family: 'Inter', sans-serif; }
+      .glass-panel {
+        background: rgba(18, 32, 51, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,0.06);
+      }
+      .glass-card {
+        background: rgba(18, 32, 51, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(149,211,186,0.1);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      }
+      .sidebar-link { transition: all 0.2s ease; }
+      .sidebar-link:hover { transform: translateX(4px); }
+      .sidebar-link.active { background: rgba(149,211,186,0.15); color: #95d3ba; }
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #274b3c; border-radius: 10px; }
+      .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+      .mat-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+      .toast { transform: translateX(120%); transition: transform 0.4s cubic-bezier(.17,.67,.38,.99); }
+      .toast.show { transform: translateX(0); }
+      @keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 rgba(149,211,186,0.4)} 70%{box-shadow:0 0 0 12px rgba(149,211,186,0)} }
+      .pulse-ai { animation: pulse-green 2s infinite; }
+      @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+      .float-anim { animation: float 4s ease-in-out infinite; }
+      input,select,textarea { color-scheme: dark; }
+    </style>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="bg-background text-on-background overflow-hidden h-screen flex">
+    <!-- ── Sidebar Navigation ──────────────────────────────────────────────── -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-screen w-64 bg-surface-container-high flex flex-col p-4 gap-1 z-50 transition-transform duration-300">
+      <!-- Logo -->
+      <div class="flex items-center gap-3 mb-6 px-2 pt-2">
+        <span class="material-symbols-outlined text-primary text-4xl mat-filled">travel_explore</span>
+        <div>
+          <h1 class="text-lg font-black text-on-surface tracking-tight">TripMate AI</h1>
+          <p class="text-xs text-on-surface-variant">Smart Travel Planner</p>
+        </div>
+      </div>
+      <!-- Nav Links -->
+      <nav class="flex-1 space-y-0.5 overflow-y-auto custom-scrollbar">
+        <a href="{% url 'user_page' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'user_page' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">dashboard</span> Dashboard
+        </a>
+        <a href="{% url 'trips_page' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if 'trip' in request.resolver_match.url_name %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">luggage</span> My Trips
+        </a>
+        <a href="{% url 'ai_planner' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'ai_planner' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">auto_awesome</span> AI Planner
+        </a>
+        <a href="{% url 'map_explorer' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'map_explorer' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">map</span> Map Explorer
+        </a>
+        <a href="{% url 'destination_explorer' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'destination_explorer' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">explore</span> Destinations
+        </a>
+        <div class="pt-2 pb-1 px-3">
+          <p class="text-xs font-semibold uppercase tracking-widest text-outline">Finance</p>
+        </div>
+        <a href="{% url 'budget_planner' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'budget_planner' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span> Budget Planner
+        </a>
+        <a href="{% url 'expenses' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'expenses' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">payments</span> Expenses
+        </a>
+        <div class="pt-2 pb-1 px-3">
+          <p class="text-xs font-semibold uppercase tracking-widest text-outline">Tools</p>
+        </div>
+        <a href="{% url 'weather' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'weather' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">wb_sunny</span> Weather
+        </a>
+        <a href="{% url 'chatbot' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'chatbot' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">smart_toy</span> AI Chatbot
+        </a>
+        <a href="{% url 'packing' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'packing' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">backpack</span> Packing List
+        </a>
+        <a href="{% url 'wallet' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'wallet' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">folder_shared</span> Travel Wallet
+        </a>
+        <a href="{% url 'journal' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'journal' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">auto_stories</span> Travel Journal
+        </a>
+        <a href="{% url 'emergency' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'emergency' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">emergency</span> Emergency
+        </a>
+        <a href="{% url 'social' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'social' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">group</span> Community
+        </a>
+        {% if user.is_staff %}
+        <div class="pt-2 pb-1 px-3">
+          <p class="text-xs font-semibold uppercase tracking-widest text-outline">Admin</p>
+        </div>
+        <a href="{% url 'admin_dashboard' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
+          <span class="material-symbols-outlined text-[20px]">admin_panel_settings</span> Admin Dashboard
+        </a>
+        {% endif %}
+      </nav>
+      <!-- Bottom Actions -->
+      <div class="space-y-0.5 border-t border-outline-variant pt-3">
+        <a href="{% url 'profile' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-variant">
+          <span class="material-symbols-outlined text-[20px]">manage_accounts</span> Profile
+        </a>
+        <a href="{% url 'Logout' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-error hover:bg-error-container/10">
+          <span class="material-symbols-outlined text-[20px]">logout</span> Sign Out
+        </a>
+      </div>
+    </aside>
+
+    <!-- ── Main Viewport ────────────────────────────────────────────────────── -->
+    <div class="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
+      <!-- Top Nav -->
+      <header class="w-full sticky top-0 bg-surface/80 backdrop-blur-md border-b border-white/5 z-40">
+        <div class="flex justify-between items-center px-6 py-3">
+          <!-- Search -->
+          <div class="relative w-full max-w-sm">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+            <input id="global-search" class="w-full bg-surface-container border-none rounded-full pl-9 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary text-on-surface placeholder:text-on-surface-variant" placeholder="Search trips, places..." type="text" />
+          </div>
+          <div class="flex items-center gap-4">
+            <!-- Weather quick widget -->
+            <div id="top-weather" class="hidden sm:flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-full text-sm">
+              <span class="material-symbols-outlined text-primary text-[16px] mat-filled">cloud</span>
+              <span class="text-on-surface text-xs font-medium" id="top-weather-text">Loading weather...</span>
+            </div>
+            <!-- Notifications -->
+            <div class="relative">
+              <button id="notif-btn" class="text-on-surface-variant hover:text-primary transition-colors relative">
+                <span class="material-symbols-outlined">notifications</span>
+                {% if unread_count %}
+                <span class="absolute -top-1 -right-1 w-4 h-4 bg-error rounded-full text-[10px] flex items-center justify-center text-white font-bold">{{ unread_count }}</span>
+                {% endif %}
+              </button>
+              <!-- Notifications dropdown -->
+              <div id="notif-dropdown" class="hidden absolute right-0 top-10 w-80 glass-panel rounded-xl shadow-2xl z-50 overflow-hidden">
+                <div class="p-3 border-b border-outline-variant flex justify-between items-center">
+                  <span class="font-semibold text-on-surface text-sm">Notifications</span>
+                  <button onclick="markAllRead()" class="text-xs text-primary hover:underline">Mark all read</button>
+                </div>
+                <div class="max-h-64 overflow-y-auto custom-scrollbar">
+                  {% for notif in notifications %}
+                  <div class="p-3 border-b border-outline-variant/50 hover:bg-surface-variant/30 transition-colors {% if not notif.is_read %}bg-primary-container/5{% endif %}">
+                    <p class="text-sm text-on-surface font-medium">{{ notif.title }}</p>
+                    <p class="text-xs text-on-surface-variant mt-0.5">{{ notif.message|truncatechars:60 }}</p>
+                    <p class="text-xs text-outline mt-1">{{ notif.created_at|timesince }} ago</p>
+                  </div>
+                  {% empty %}
+                  <div class="p-6 text-center text-on-surface-variant text-sm">No new notifications</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            <!-- Settings -->
+            <a href="{% url 'profile' %}" class="text-on-surface-variant hover:text-primary transition-colors">
+              <span class="material-symbols-outlined">settings</span>
+            </a>
+            <!-- Create Trip btn -->
+            <a href="{% url 'ai_planner' %}" class="bg-primary text-on-primary px-4 py-1.5 rounded-full text-sm font-bold hover:brightness-110 active:scale-95 transition-all whitespace-nowrap">
+              + New Trip
+            </a>
+            <!-- Avatar -->
+            <a href="{% url 'profile' %}" class="w-9 h-9 rounded-full border-2 border-primary-container overflow-hidden flex items-center justify-center bg-primary-container/30 flex-shrink-0">
+              {% if user.profile.avatar %}
+              <img class="w-full h-full object-cover" src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+              {% else %}
+              <span class="material-symbols-outlined text-primary text-[18px]">person</span>
+              {% endif %}
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <!-- ── Page Content ──────────────────────────────────────────────────── -->
+      <main class="flex-1 overflow-y-auto custom-scrollbar">
+        <!-- Django Messages -->
+        {% if messages %}
+        <div class="px-6 pt-4 space-y-2">
+          {% for message in messages %}
+          <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
+            {% if message.tags == 'error' %}bg-error-container/30 text-error border border-error/20
+            {% elif message.tags == 'success' %}bg-primary-container/30 text-primary border border-primary/20
+            {% else %}bg-surface-container text-on-surface border border-outline-variant{% endif %}">
+            <span class="material-symbols-outlined text-[18px]">
+              {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}check_circle{% else %}info{% endif %}
+            </span>
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    <!-- ── AI Chatbot FAB ─────────────────────────────────────────────────── -->
+    {% if request.resolver_match.url_name != 'chatbot' %}
+    <a href="{% url 'chatbot' %}" class="fixed bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center group hover:scale-110 active:scale-95 transition-all z-50 pulse-ai" title="Ask TripMate AI">
+      <span class="material-symbols-outlined text-2xl">smart_toy</span>
+      <div class="absolute bottom-full right-0 mb-3 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all pointer-events-none">
+        <div class="glass-card px-3 py-1.5 rounded-lg whitespace-nowrap text-xs font-medium text-on-surface">Ask TripMate AI</div>
+      </div>
+    </a>
+    {% endif %}
+
+    <!-- ── Toast Notifications ────────────────────────────────────────────── -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2 pointer-events-none"></div>
+
+    <script>
+      // ── Toast System ──────────────────────────────────────────────────────
+      function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        const colors = {
+          success: 'bg-primary-container/90 text-primary border-primary/30',
+          error: 'bg-error-container/90 text-error border-error/30',
+          info: 'bg-surface-container-high/90 text-on-surface border-outline-variant',
+        };
+        const icons = { success: 'check_circle', error: 'error', info: 'info' };
+        toast.className = `toast pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border glass-panel shadow-2xl text-sm font-medium max-w-sm ${colors[type] || colors.info}`;
+        toast.innerHTML = `<span class="material-symbols-outlined text-[18px]">${icons[type] || 'info'}</span><span>${message}</span>`;
+        container.appendChild(toast);
+        requestAnimationFrame(() => { setTimeout(() => toast.classList.add('show'), 10); });
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
+      }
+
+      // ── Notification Dropdown ─────────────────────────────────────────────
+      const notifBtn = document.getElementById('notif-btn');
+      const notifDropdown = document.getElementById('notif-dropdown');
+      if (notifBtn) {
+        notifBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          notifDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => notifDropdown.classList.add('hidden'));
+      }
+
+      function markAllRead() {
+        fetch('/api/notifications/', { method: 'PATCH', headers: {'X-CSRFToken': getCsrfToken()} })
+          .then(() => { showToast('All notifications marked as read.'); notifDropdown.classList.add('hidden'); });
+      }
+
+      // ── Get CSRF Token ─────────────────────────────────────────────────────
+      function getCsrfToken() {
+        const match = document.cookie.match(/csrftoken=([^;]+)/);
+        return match ? match[1] : '';
+      }
+
+      // ── Top Weather Widget ─────────────────────────────────────────────────
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const { latitude, longitude } = pos.coords;
+          fetch(`/api/weather/?lat=${latitude}&lon=${longitude}&type=current`, {
+            headers: { 'X-CSRFToken': getCsrfToken() }
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.temperature !== undefined) {
+              document.getElementById('top-weather').classList.remove('hidden');
+              document.getElementById('top-weather-text').textContent = `${Math.round(data.temperature)}°C ${data.emoji || ''}`;
+            }
+          }).catch(() => {});
+        });
+      }
+
+      // ── Scroll Shadow ──────────────────────────────────────────────────────
+      const mainEl = document.querySelector('main');
+      const headerEl = document.querySelector('header');
+      if (mainEl && headerEl) {
+        mainEl.addEventListener('scroll', () => {
+          if (mainEl.scrollTop > 5) headerEl.classList.add('shadow-lg');
+          else headerEl.classList.remove('shadow-lg');
+        });
+      }
+    </script>
+    {% block extra_scripts %}{% endblock %}
+  </body>
+</html>

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Community{% endblock %}
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <div><h2 class="text-2xl font-bold text-on-surface">Community</h2><p class="text-on-surface-variant text-sm mt-1">Explore trips and reviews from the TripMate community</p></div>
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="xl:col-span-2 space-y-4">
+      <h3 class="font-bold text-on-surface">Public Trips</h3>
+      {% if public_trips %}
+        {% for trip in public_trips %}
+        <div class="glass-panel rounded-2xl p-5 flex items-start gap-4 hover:border-primary/20 border border-transparent transition-all">
+          <div class="w-12 h-12 bg-primary-container/30 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-primary text-2xl mat-filled">flight_takeoff</span>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between gap-2">
+              <h4 class="font-bold text-on-surface">{{ trip.source }} → {{ trip.destination }}</h4>
+              {% if trip.ai_generated %}<span class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full flex items-center gap-1"><span class="material-symbols-outlined text-[10px] mat-filled">auto_awesome</span>AI</span>{% endif %}
+            </div>
+            <p class="text-xs text-on-surface-variant mt-0.5">By {{ trip.user.username }} · {{ trip.start_date|date:"M d" }} - {{ trip.end_date|date:"M d, Y" }} · {{ trip.num_travelers }} traveler{{ trip.num_travelers|pluralize }}</p>
+            {% if trip.interests %}<div class="flex gap-1.5 flex-wrap mt-2">{% for i in trip.interests|slice:":3" %}<span class="px-2 py-0.5 bg-primary-container/20 text-primary text-xs rounded-full">{{ i }}</span>{% endfor %}</div>{% endif %}
+          </div>
+          <span class="text-sm font-bold text-primary flex-shrink-0">₹{{ trip.budget|floatformat:0 }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="glass-panel rounded-2xl p-12 text-center"><span class="material-symbols-outlined text-4xl text-outline mat-filled block mb-3">group</span><p class="font-semibold text-on-surface">No public trips yet</p></div>
+      {% endif %}
+    </div>
+    <div class="space-y-4">
+      <h3 class="font-bold text-on-surface">Recent Reviews</h3>
+      {% if reviews %}
+        {% for review in reviews %}
+        <div class="glass-panel rounded-2xl p-4 hover:border-primary/20 border border-transparent transition-all">
+          <div class="flex items-center justify-between mb-2">
+            <p class="font-semibold text-on-surface text-sm">{{ review.user.username }}</p>
+            <div class="flex gap-0.5">{% for i in "12345" %}<span class="material-symbols-outlined text-[12px] {% if forloop.counter <= review.rating %}text-yellow-400 mat-filled{% else %}text-outline{% endif %}">star</span>{% endfor %}</div>
+          </div>
+          <p class="font-medium text-on-surface text-sm">{{ review.title }}</p>
+          <p class="text-xs text-on-surface-variant mt-1 line-clamp-2">{{ review.content }}</p>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="glass-panel rounded-2xl p-8 text-center"><span class="material-symbols-outlined text-4xl text-outline block mb-2">reviews</span><p class="text-sm text-on-surface-variant">No reviews yet</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

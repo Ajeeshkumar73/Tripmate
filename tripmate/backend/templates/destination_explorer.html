@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Destinations{% endblock %}
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div><h2 class="text-2xl font-bold text-on-surface">Explore Destinations</h2><p class="text-on-surface-variant text-sm mt-1">Discover amazing places for your next trip</p></div>
+    <div class="flex gap-2">
+      <input id="dest-search" class="bg-surface-container border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-on-surface placeholder:text-outline/60 focus:border-primary transition-all w-48" placeholder="Search destinations..." type="text" oninput="filterDests(this.value)" />
+    </div>
+  </div>
+
+  <!-- Category Filters -->
+  <div class="flex gap-2 flex-wrap">
+    <button class="dest-filter active px-4 py-2 rounded-xl text-sm font-medium border border-primary bg-primary-container/20 text-primary transition-all" data-cat="all">All</button>
+    {% for val, label in categories %}
+    <button class="dest-filter px-4 py-2 rounded-xl text-sm font-medium border border-outline-variant text-on-surface-variant hover:border-primary transition-all" data-cat="{{ val }}">{{ label }}</button>
+    {% endfor %}
+  </div>
+
+  {% if destinations %}
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5" id="dest-grid">
+    {% for dest in destinations %}
+    <div class="dest-card glass-panel rounded-2xl overflow-hidden hover:border-primary/30 border border-transparent transition-all group" data-cat="{{ dest.category }}">
+      <div class="h-48 bg-gradient-to-br from-primary-container/30 to-tertiary-container/20 relative overflow-hidden">
+        {% if dest.image %}
+        <img src="{{ dest.image.url }}" alt="{{ dest.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        {% endif %}
+        <div class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent"></div>
+        <div class="absolute top-3 left-3 flex gap-1.5">
+          {% if dest.is_trending %}<span class="px-2 py-0.5 bg-primary text-on-primary text-xs font-bold rounded-full">🔥 Trending</span>{% endif %}
+          {% if dest.is_hidden_gem %}<span class="px-2 py-0.5 bg-tertiary-container text-tertiary text-xs font-bold rounded-full">💎 Hidden Gem</span>{% endif %}
+        </div>
+        <div class="absolute bottom-3 left-3">
+          <span class="text-xs px-2 py-0.5 bg-surface-container/80 text-on-surface rounded-full backdrop-blur-sm capitalize">{{ dest.get_category_display }}</span>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <h3 class="font-bold text-on-surface">{{ dest.name }}</h3>
+            <p class="text-xs text-on-surface-variant mt-0.5 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">location_on</span>{{ dest.country }}{% if dest.state %}, {{ dest.state }}{% endif %}</p>
+          </div>
+          {% if dest.rating > 0 %}<div class="flex items-center gap-1 bg-surface-container px-2 py-1 rounded-xl flex-shrink-0"><span class="material-symbols-outlined text-yellow-400 text-[12px] mat-filled">star</span><span class="text-xs font-bold text-on-surface">{{ dest.rating }}</span></div>{% endif %}
+        </div>
+        <p class="text-xs text-on-surface-variant mt-2 line-clamp-2">{{ dest.description }}</p>
+        <div class="flex items-center justify-between mt-3">
+          {% if dest.avg_budget_per_day %}<span class="text-xs text-primary font-semibold">~₹{{ dest.avg_budget_per_day|floatformat:0 }}/day</span>{% endif %}
+          {% if dest.best_season %}<span class="text-xs text-on-surface-variant">Best: {{ dest.best_season }}</span>{% endif %}
+          <a href="{% url 'ai_planner' %}?dest={{ dest.name|urlencode }}" class="text-xs text-primary hover:underline flex items-center gap-0.5">Plan Trip <span class="material-symbols-outlined text-[12px]">arrow_forward</span></a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="glass-panel rounded-2xl p-12 text-center">
+    <span class="material-symbols-outlined text-5xl text-outline mat-filled block mb-4">explore</span>
+    <p class="font-semibold text-on-surface">No destinations yet</p>
+    <p class="text-xs text-on-surface-variant mt-1">Destinations will appear here once added by admin</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function filterDests(q) {
+  document.querySelectorAll('.dest-card').forEach(el => {
+    const text = el.textContent.toLowerCase();
+    el.style.display = text.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+document.querySelectorAll('.dest-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dest-filter').forEach(b => b.classList.remove('active','border-primary','bg-primary-container/20','text-primary'));
+    document.querySelectorAll('.dest-filter').forEach(b => b.classList.add('border-outline-variant','text-on-surface-variant'));
+    btn.classList.add('active','border-primary','bg-primary-container/20','text-primary');
+    btn.classList.remove('border-outline-variant','text-on-surface-variant');
+    const cat = btn.dataset.cat;
+    document.querySelectorAll('.dest-card').forEach(el => {
+      el.style.display = (cat === 'all' || el.dataset.cat === cat) ? '' : 'none';
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block title %}AI Trip Planner{% endblock %}
+
+{% block content %}
+<div class="px-6 py-6 space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-on-surface">AI Trip Planner</h2>
+      <p class="text-on-surface-variant text-sm mt-1">Generate a complete personalized itinerary with AI</p>
+    </div>
+    <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-container/20 border border-primary/20">
+      <span class="material-symbols-outlined text-primary text-[16px] mat-filled">auto_awesome</span>
+      <span class="text-xs font-medium text-primary">Powered by Groq AI</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Planner Form -->
+    <div class="xl:col-span-2 glass-panel rounded-2xl p-6">
+      <h3 class="font-bold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary mat-filled">edit_note</span> Trip Details
+      </h3>
+      <form id="planner-form" class="space-y-5">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Starting Location *</label>
+            <input id="source" name="source" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface placeholder:text-outline/60 transition-all" placeholder="e.g. Mumbai, India" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Destination *</label>
+            <input id="destination" name="destination" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface placeholder:text-outline/60 transition-all" placeholder="e.g. Goa, India" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Start Date *</label>
+            <input id="start_date" type="date" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">End Date *</label>
+            <input id="end_date" type="date" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Number of Travelers</label>
+            <input id="num_travelers" type="number" min="1" max="50" value="1" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Budget (₹) *</label>
+            <input id="budget" type="number" min="1000" placeholder="50000" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface placeholder:text-outline/60 transition-all" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Transportation</label>
+            <select id="transport" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all">
+              <option value="best">Best Option</option>
+              <option value="car">Car</option>
+              <option value="train">Train</option>
+              <option value="bus">Bus</option>
+              <option value="flight">Flight</option>
+              <option value="bike">Bike</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Travel Type</label>
+            <select id="travel_type" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all">
+              <option value="solo">Solo</option>
+              <option value="couple">Couple</option>
+              <option value="family">Family</option>
+              <option value="friends">Friends</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Hotel Preference</label>
+            <select id="hotel_preference" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all">
+              <option value="budget">Budget / Hostel</option>
+              <option value="mid_range" selected>Mid-Range</option>
+              <option value="luxury">Luxury</option>
+              <option value="airbnb">Airbnb / Homestay</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Food Preference</label>
+            <select id="food_preference" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all">
+              <option value="any" selected>Any</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="non_vegetarian">Non-Vegetarian</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Interests -->
+        <div>
+          <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Your Interests (select all that apply)</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2" id="interests-grid">
+            {% for interest in "Adventure,Nature,Beaches,Mountains,Wildlife,Photography,Shopping,History,Religious Places,Nightlife,Food Tourism,Luxury,Budget Travel,Family,Solo,Couple,Friends"|split:"," %}
+            <label class="cursor-pointer group">
+              <input type="checkbox" name="interest" value="{{ interest }}" class="sr-only peer" />
+              <div class="peer-checked:bg-primary-container/30 peer-checked:border-primary peer-checked:text-primary flex items-center gap-2 px-3 py-2 rounded-xl border border-outline-variant text-on-surface-variant hover:border-primary/50 transition-all text-xs font-medium">
+                <span class="material-symbols-outlined text-[14px]">{% if 'Adventure' in interest %}hiking{% elif 'Nature' in interest %}park{% elif 'Beach' in interest %}beach_access{% elif 'Mountain' in interest %}terrain{% elif 'Wildlife' in interest %}pets{% elif 'Photo' in interest %}camera{% elif 'Shop' in interest %}shopping_bag{% elif 'History' in interest %}museum{% elif 'Religious' in interest %}temple_buddhist{% elif 'Night' in interest %}nightlife{% elif 'Food' in interest %}restaurant{% elif 'Luxury' in interest %}diamond{% else %}interests{% endif %}</span>
+                {{ interest }}
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <button type="submit" id="generate-btn" class="w-full py-4 bg-primary text-on-primary rounded-2xl font-bold text-base flex items-center justify-center gap-3 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all">
+          <span class="material-symbols-outlined mat-filled">auto_awesome</span>
+          <span id="btn-text">Generate AI Itinerary</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Tips Sidebar -->
+    <div class="space-y-4">
+      <div class="glass-panel rounded-2xl p-5">
+        <h4 class="font-bold text-on-surface mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[18px]">tips_and_updates</span> AI Planning Tips
+        </h4>
+        <div class="space-y-3 text-sm">
+          <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[16px] mt-0.5">check_circle</span><span>Be specific with your destination for better results</span></div>
+          <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[16px] mt-0.5">check_circle</span><span>Select multiple interests for a diverse itinerary</span></div>
+          <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[16px] mt-0.5">check_circle</span><span>Set a realistic budget for accurate cost estimates</span></div>
+          <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[16px] mt-0.5">check_circle</span><span>AI generates full day-wise plans with costs</span></div>
+        </div>
+      </div>
+
+      <!-- Recent Trips -->
+      {% if trips %}
+      <div class="glass-panel rounded-2xl p-5">
+        <h4 class="font-bold text-on-surface mb-3">Recent Trips</h4>
+        <div class="space-y-2">
+          {% for trip in trips|slice:":4" %}
+          <a href="{% url 'trip_detail' trip.id %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-variant transition-all group">
+            <span class="material-symbols-outlined text-primary text-[18px] mat-filled">flight_takeoff</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-on-surface truncate">{{ trip.destination }}</p>
+              <p class="text-xs text-on-surface-variant">{{ trip.start_date|date:"M d, Y" }}</p>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full {% if trip.ai_generated %}bg-primary-container/20 text-primary{% else %}bg-surface-variant text-on-surface-variant{% endif %}">
+              {% if trip.ai_generated %}AI{% else %}Manual{% endif %}
+            </span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-background/80 backdrop-blur-md z-[200] flex items-center justify-center">
+    <div class="glass-panel rounded-3xl p-10 flex flex-col items-center gap-6 max-w-sm text-center">
+      <div class="relative w-24 h-24">
+        <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+        <div class="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <span class="absolute inset-0 flex items-center justify-center material-symbols-outlined text-primary text-4xl mat-filled float-anim">auto_awesome</span>
+      </div>
+      <div>
+        <p class="text-xl font-bold text-on-surface">Generating Itinerary...</p>
+        <p class="text-sm text-on-surface-variant mt-2" id="loading-msg">AI is crafting your perfect trip</p>
+      </div>
+      <div class="w-full bg-surface-container rounded-full h-1.5">
+        <div id="loading-bar" class="bg-primary h-1.5 rounded-full transition-all duration-1000" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Itinerary Result -->
+  <div id="itinerary-result" class="hidden space-y-6"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+const loadingMsgs = ['Planning your route...','Finding best restaurants...','Checking hotel options...','Estimating budgets...','Adding hidden gems...','Finalizing your itinerary...'];
+let loadingIdx = 0;
+
+document.getElementById('planner-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const source = document.getElementById('source').value.trim();
+  const destination = document.getElementById('destination').value.trim();
+  const start_date = document.getElementById('start_date').value;
+  const end_date = document.getElementById('end_date').value;
+  const budget = document.getElementById('budget').value;
+  if (!source || !destination || !start_date || !end_date || !budget) {
+    showToast('Please fill in all required fields.', 'error'); return;
+  }
+
+  const interests = [...document.querySelectorAll('input[name="interest"]:checked')].map(i => i.value);
+  const sd = new Date(start_date), ed = new Date(end_date);
+  const num_days = Math.max(1, Math.ceil((ed - sd) / 86400000) + 1);
+
+  // First create the trip
+  const tripResp = await fetch('/api/trips/', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken': CSRF},
+    body: JSON.stringify({
+      source, destination, start_date, end_date, num_days,
+      num_travelers: parseInt(document.getElementById('num_travelers').value),
+      budget: parseFloat(budget),
+      transport: document.getElementById('transport').value,
+      travel_type: document.getElementById('travel_type').value,
+      hotel_preference: document.getElementById('hotel_preference').value,
+      food_preference: document.getElementById('food_preference').value,
+      interests,
+    })
+  });
+
+  if (!tripResp.ok) { showToast('Failed to create trip.', 'error'); return; }
+  const trip = await tripResp.json();
+
+  // Show loading
+  document.getElementById('loading-overlay').classList.remove('hidden');
+  document.getElementById('generate-btn').disabled = true;
+  const bar = document.getElementById('loading-bar');
+  const msgEl = document.getElementById('loading-msg');
+
+  const interval = setInterval(() => {
+    loadingIdx = (loadingIdx + 1) % loadingMsgs.length;
+    msgEl.textContent = loadingMsgs[loadingIdx];
+  }, 3000);
+
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    progress = Math.min(progress + Math.random() * 15, 90);
+    bar.style.width = progress + '%';
+  }, 800);
+
+  try {
+    const aiResp = await fetch('/api/ai/generate-itinerary/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken': CSRF},
+      body: JSON.stringify({trip_id: trip.id})
+    });
+
+    clearInterval(interval); clearInterval(progressInterval);
+    bar.style.width = '100%';
+
+    if (!aiResp.ok) throw new Error('AI generation failed');
+    const data = await aiResp.json();
+
+    setTimeout(() => {
+      document.getElementById('loading-overlay').classList.add('hidden');
+      renderItinerary(data.itinerary, trip.id, destination);
+    }, 600);
+  } catch(err) {
+    clearInterval(interval); clearInterval(progressInterval);
+    document.getElementById('loading-overlay').classList.add('hidden');
+    document.getElementById('generate-btn').disabled = false;
+    showToast('AI generation failed. Please try again.', 'error');
+  }
+});
+
+function renderItinerary(data, tripId, dest) {
+  const result = document.getElementById('itinerary-result');
+  result.classList.remove('hidden');
+  result.scrollIntoView({behavior:'smooth'});
+
+  const slotIcons = { breakfast:'free_breakfast', morning:'wb_sunny', lunch:'lunch_dining', afternoon:'explore', evening:'local_bar', dinner:'dinner_dining', other:'schedule' };
+  const slotColors = { breakfast:'text-amber-400', morning:'text-primary', lunch:'text-orange-400', afternoon:'text-tertiary', evening:'text-purple-400', dinner:'text-rose-400', other:'text-outline' };
+
+  let html = `
+    <div class="glass-panel rounded-2xl p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+        <div>
+          <h3 class="text-xl font-bold text-on-surface">${data.title || 'Your AI Itinerary'}</h3>
+          <p class="text-sm text-on-surface-variant mt-1">${data.overview || ''}</p>
+        </div>
+        <div class="flex gap-2">
+          <a href="/trips/${tripId}/" class="px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:-translate-y-0.5 transition-all">View Full Trip</a>
+          <a href="/packing/?trip=${tripId}" class="px-4 py-2 border border-outline-variant text-on-surface-variant rounded-xl text-sm font-semibold hover:border-primary hover:text-primary transition-all">Packing List</a>
+        </div>
+      </div>
+      ${data.total_estimated_cost ? `<div class="flex items-center gap-2 mt-3 text-sm"><span class="material-symbols-outlined text-primary text-[16px]">payments</span><span class="text-on-surface-variant">Estimated Cost:</span><span class="font-bold text-primary">₹${data.total_estimated_cost.toLocaleString('en-IN')}</span></div>` : ''}
+    </div>
+
+    <div class="grid grid-cols-1 gap-4" id="days-container">`;
+
+  (data.days || []).forEach(day => {
+    html += `
+      <div class="glass-panel rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-outline-variant/50 flex items-center justify-between bg-surface-container/30">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary-container/40 rounded-xl flex items-center justify-center">
+              <span class="font-black text-primary text-lg">D${day.day}</span>
+            </div>
+            <div>
+              <p class="font-bold text-on-surface">${day.theme || 'Day ' + day.day}</p>
+              <p class="text-xs text-on-surface-variant">${day.date || ''} ${day.weather_note ? '· ' + day.weather_note : ''}</p>
+            </div>
+          </div>
+          ${day.estimated_cost ? `<div class="text-right"><p class="text-xs text-on-surface-variant">Est. Cost</p><p class="font-bold text-primary">₹${day.estimated_cost.toLocaleString('en-IN')}</p></div>` : ''}
+        </div>
+        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          ${(day.activities || []).map(act => `
+            <div class="bg-surface-container/50 rounded-xl p-3 hover:bg-surface-container transition-all">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="material-symbols-outlined ${slotColors[act.time_slot] || 'text-outline'} text-[16px] mat-filled">${slotIcons[act.time_slot] || 'schedule'}</span>
+                <span class="text-xs font-semibold uppercase tracking-wider ${slotColors[act.time_slot] || 'text-outline'}">${act.time_slot}</span>
+                ${act.estimated_cost ? `<span class="ml-auto text-xs text-outline">₹${act.estimated_cost}</span>` : ''}
+              </div>
+              <p class="font-semibold text-on-surface text-sm">${act.name}</p>
+              ${act.location ? `<p class="text-xs text-on-surface-variant mt-0.5 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">location_on</span>${act.location}</p>` : ''}
+              ${act.description ? `<p class="text-xs text-outline mt-1 line-clamp-2">${act.description}</p>` : ''}
+              ${act.tips ? `<p class="text-xs text-primary/80 mt-1 flex items-start gap-1"><span class="material-symbols-outlined text-[12px] mt-0.5">tips_and_updates</span>${act.tips}</p>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  });
+
+  html += `</div>`;
+
+  // Travel Tips
+  if (data.travel_tips?.length) {
+    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="glass-panel rounded-2xl p-5">
+        <h4 class="font-bold text-on-surface mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">tips_and_updates</span>Travel Tips</h4>
+        <ul class="space-y-2">${data.travel_tips.map(t => `<li class="flex items-start gap-2 text-xs text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[14px] mt-0.5">check</span>${t}</li>`).join('')}</ul>
+      </div>
+      <div class="glass-panel rounded-2xl p-5">
+        <h4 class="font-bold text-on-surface mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-error text-[18px]">security</span>Safety Tips</h4>
+        <ul class="space-y-2">${(data.safety_tips||[]).map(t => `<li class="flex items-start gap-2 text-xs text-on-surface-variant"><span class="material-symbols-outlined text-error text-[14px] mt-0.5">shield</span>${t}</li>`).join('')}</ul>
+      </div>
+      <div class="glass-panel rounded-2xl p-5">
+        <h4 class="font-bold text-on-surface mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">eco</span>Eco Tips</h4>
+        <ul class="space-y-2">${(data.eco_tips||[]).map(t => `<li class="flex items-start gap-2 text-xs text-on-surface-variant"><span class="material-symbols-outlined text-tertiary text-[14px] mt-0.5">leaf</span>${t}</li>`).join('')}</ul>
+      </div>
+    </div>`;
+  }
+
+  result.innerHTML = html;
+  showToast('AI itinerary generated successfully! 🎉', 'success');
+}
+</script>
+{% endblock %}
