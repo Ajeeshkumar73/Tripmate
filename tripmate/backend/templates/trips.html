@@ -44,7 +44,7 @@
             </span>
             {% if trip.ai_generated %}
             <span class="text-xs px-2 py-0.5 bg-primary/20 text-primary rounded-full font-medium flex items-center gap-1">
-              <span class="material-symbols-outlined text-[10px] mat-filled">auto_awesome</span> AI
+              <span class="material-symbols-outlined text-[10px] mat-filled">auto_awesome</span> Smart
             </span>
             {% endif %}
           </div>
@@ -81,9 +81,9 @@
   <div class="glass-panel rounded-2xl p-16 text-center">
     <span class="material-symbols-outlined text-7xl text-outline mat-filled block mb-4">luggage</span>
     <h3 class="text-xl font-bold text-on-surface">No trips yet</h3>
-    <p class="text-on-surface-variant mt-2 text-sm">Start planning your first adventure with AI!</p>
+    <p class="text-on-surface-variant mt-2 text-sm">Start planning your first adventure!</p>
     <a href="{% url 'ai_planner' %}" class="mt-6 inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-semibold hover:brightness-110 transition-all">
-      <span class="material-symbols-outlined mat-filled">auto_awesome</span> Plan with AI
+      <span class="material-symbols-outlined mat-filled">auto_awesome</span> Plan Trip
     </a>
   </div>
   {% endif %}

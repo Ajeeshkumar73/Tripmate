@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}TripMate AI{% endblock %} | Smart Travel Planner</title>
-    <meta name="description" content="{% block meta_description %}AI-powered travel planner and assistant{% endblock %}" />
+    <title>{% block title %}TripMate{% endblock %} | Travel Planner</title>
+    <meta name="description" content="{% block meta_description %}Plan and manage your trips with TripMate{% endblock %}" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
@@ -24,13 +24,13 @@
               "surface-container": "#122033", "on-tertiary": "#113729",
               "on-surface-variant": "#bfc9c3", "secondary-fixed": "#dae2fd",
               "secondary-container": "#3f465c", "inverse-surface": "#d5e3fd",
-              "surface-container-high": "#1c2b3e", "outline-variant": "#404944",
+              "surface-container-high": "#1c2b3e", "outline-variant": "#3b4c5e",
               "primary-fixed": "#b0f0d6", "on-tertiary-container": "#93baa7",
               "surface-container-lowest": "#010f21", surface: "#051426",
               "on-primary-fixed-variant": "#0b513d", "tertiary-fixed": "#c3ecd7",
               "surface-container-low": "#0d1c2f", error: "#ffb4ab",
               "on-secondary-fixed": "#131b2e", "primary-container": "#064e3b",
-              "surface-tint": "#95d3ba", outline: "#89938d",
+              "surface-tint": "#95d3ba", outline: "#64748b",
               "on-surface": "#d5e3fd", "tertiary-fixed-dim": "#a8cfbc",
               "surface-variant": "#273649", "on-error": "#690005",
               "surface-bright": "#2c3a4e", background: "#051426",
@@ -54,21 +54,77 @@
     </script>
     <style>
       * { font-family: 'Inter', sans-serif; }
-      .glass-panel {
-        background: rgba(18, 32, 51, 0.7);
+
+      /* ── Modern Sharp Card Design System ─────────────────────────────────── */
+      .app-card, .glass-panel, .glass-card {
+        background: rgba(28, 43, 62, 0.88) !important;
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255,255,255,0.06);
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
       }
-      .glass-card {
-        background: rgba(18, 32, 51, 0.6);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(149,211,186,0.1);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+
+      .app-card:hover, .glass-panel:hover, .glass-card:hover {
+        border-color: rgba(149, 211, 186, 0.35) !important;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 16px rgba(149, 211, 186, 0.12);
       }
+
+      /* Fix utility classes that set transparent borders on cards */
+      .glass-panel.border-transparent, .app-card.border-transparent, .glass-card.border-transparent {
+        border-color: rgba(255, 255, 255, 0.14) !important;
+      }
+
+      /* ── Modern High-Contrast Form Controls System ──────────────────────── */
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      input[type="number"],
+      input[type="date"],
+      input[type="time"],
+      input[type="search"],
+      input[type="url"],
+      select,
+      textarea {
+        color-scheme: dark;
+        background-color: #0d1c2f !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        color: #d5e3fd !important;
+        border-radius: 0.75rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+      }
+
+      input[type="text"]:hover,
+      input[type="email"]:hover,
+      input[type="password"]:hover,
+      input[type="number"]:hover,
+      input[type="date"]:hover,
+      input[type="time"]:hover,
+      input[type="search"]:hover,
+      input[type="url"]:hover,
+      select:hover,
+      textarea:hover {
+        border-color: rgba(149, 211, 186, 0.45) !important;
+      }
+
+      input[type="text"]:focus,
+      input[type="email"]:focus,
+      input[type="password"]:focus,
+      input[type="number"]:focus,
+      input[type="date"]:focus,
+      input[type="time"]:focus,
+      input[type="search"]:focus,
+      input[type="url"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #95d3ba !important;
+        box-shadow: 0 0 0 3px rgba(149, 211, 186, 0.25) !important;
+        outline: none !important;
+      }
+
       .sidebar-link { transition: all 0.2s ease; }
       .sidebar-link:hover { transform: translateX(4px); }
-      .sidebar-link.active { background: rgba(149,211,186,0.15); color: #95d3ba; }
+      .sidebar-link.active { background: rgba(149,211,186,0.12); color: #95d3ba; border-left: 3px solid #95d3ba; }
       .custom-scrollbar::-webkit-scrollbar { width: 4px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #274b3c; border-radius: 10px; }
@@ -76,23 +132,18 @@
       .mat-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
       .toast { transform: translateX(120%); transition: transform 0.4s cubic-bezier(.17,.67,.38,.99); }
       .toast.show { transform: translateX(0); }
-      @keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 rgba(149,211,186,0.4)} 70%{box-shadow:0 0 0 12px rgba(149,211,186,0)} }
-      .pulse-ai { animation: pulse-green 2s infinite; }
-      @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-      .float-anim { animation: float 4s ease-in-out infinite; }
-      input,select,textarea { color-scheme: dark; }
     </style>
     {% block extra_head %}{% endblock %}
   </head>
   <body class="bg-background text-on-background overflow-hidden h-screen flex">
     <!-- ── Sidebar Navigation ──────────────────────────────────────────────── -->
-    <aside id="sidebar" class="fixed left-0 top-0 h-screen w-64 bg-surface-container-high flex flex-col p-4 gap-1 z-50 transition-transform duration-300">
+    <aside id="sidebar" class="fixed left-0 top-0 h-screen w-64 bg-surface-container-high flex flex-col p-4 gap-1 z-50 transition-transform duration-300 border-r border-outline-variant/30">
       <!-- Logo -->
       <div class="flex items-center gap-3 mb-6 px-2 pt-2">
         <span class="material-symbols-outlined text-primary text-4xl mat-filled">travel_explore</span>
         <div>
-          <h1 class="text-lg font-black text-on-surface tracking-tight">TripMate AI</h1>
-          <p class="text-xs text-on-surface-variant">Smart Travel Planner</p>
+          <h1 class="text-lg font-black text-on-surface tracking-tight">TripMate</h1>
+          <p class="text-xs text-on-surface-variant">Travel Planner</p>
         </div>
       </div>
       <!-- Nav Links -->
@@ -102,9 +153,6 @@
         </a>
         <a href="{% url 'trips_page' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if 'trip' in request.resolver_match.url_name %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
           <span class="material-symbols-outlined text-[20px]">luggage</span> My Trips
-        </a>
-        <a href="{% url 'ai_planner' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'ai_planner' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
-          <span class="material-symbols-outlined text-[20px]">auto_awesome</span> AI Planner
         </a>
         <a href="{% url 'map_explorer' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'map_explorer' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
           <span class="material-symbols-outlined text-[20px]">map</span> Map Explorer
@@ -127,9 +175,6 @@
         <a href="{% url 'weather' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'weather' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
           <span class="material-symbols-outlined text-[20px]">wb_sunny</span> Weather
         </a>
-        <a href="{% url 'chatbot' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'chatbot' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
-          <span class="material-symbols-outlined text-[20px]">smart_toy</span> AI Chatbot
-        </a>
         <a href="{% url 'packing' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'packing' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
           <span class="material-symbols-outlined text-[20px]">backpack</span> Packing List
         </a>
@@ -138,9 +183,6 @@
         </a>
         <a href="{% url 'journal' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'journal' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
           <span class="material-symbols-outlined text-[20px]">auto_stories</span> Travel Journal
-        </a>
-        <a href="{% url 'emergency' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'emergency' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
-          <span class="material-symbols-outlined text-[20px]">emergency</span> Emergency
         </a>
         <a href="{% url 'social' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.resolver_match.url_name == 'social' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant{% endif %}">
           <span class="material-symbols-outlined text-[20px]">group</span> Community
@@ -155,7 +197,7 @@
         {% endif %}
       </nav>
       <!-- Bottom Actions -->
-      <div class="space-y-0.5 border-t border-outline-variant pt-3">
+      <div class="space-y-0.5 border-t border-outline-variant/30 pt-3">
         <a href="{% url 'profile' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-variant">
           <span class="material-symbols-outlined text-[20px]">manage_accounts</span> Profile
         </a>
@@ -168,16 +210,22 @@
     <!-- ── Main Viewport ────────────────────────────────────────────────────── -->
     <div class="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
       <!-- Top Nav -->
-      <header class="w-full sticky top-0 bg-surface/80 backdrop-blur-md border-b border-white/5 z-40">
+      <header class="w-full sticky top-0 bg-surface-container-high border-b border-outline-variant/30 z-40">
         <div class="flex justify-between items-center px-6 py-3">
-          <!-- Search -->
+          <!-- Search → opens Google Maps -->
           <div class="relative w-full max-w-sm">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
-            <input id="global-search" class="w-full bg-surface-container border-none rounded-full pl-9 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary text-on-surface placeholder:text-on-surface-variant" placeholder="Search trips, places..." type="text" />
+            <button onclick="headerSearch()" class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors" title="Search on Google Maps">
+              <span class="material-symbols-outlined text-[18px]">search</span>
+            </button>
+            <input id="global-search"
+              class="w-full bg-surface-container border border-outline-variant/50 rounded-lg pl-9 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary text-on-surface placeholder:text-on-surface-variant"
+              placeholder="Search places on Google Maps..."
+              type="text"
+              onkeydown="if(event.key==='Enter') headerSearch()" />
           </div>
           <div class="flex items-center gap-4">
             <!-- Weather quick widget -->
-            <div id="top-weather" class="hidden sm:flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-full text-sm">
+            <div id="top-weather" class="hidden sm:flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 px-3 py-1.5 rounded-lg text-sm">
               <span class="material-symbols-outlined text-primary text-[16px] mat-filled">cloud</span>
               <span class="text-on-surface text-xs font-medium" id="top-weather-text">Loading weather...</span>
             </div>
@@ -190,14 +238,14 @@
                 {% endif %}
               </button>
               <!-- Notifications dropdown -->
-              <div id="notif-dropdown" class="hidden absolute right-0 top-10 w-80 glass-panel rounded-xl shadow-2xl z-50 overflow-hidden">
-                <div class="p-3 border-b border-outline-variant flex justify-between items-center">
+              <div id="notif-dropdown" class="hidden absolute right-0 top-10 w-80 bg-surface-container-high border border-outline-variant/50 rounded-xl shadow-2xl z-50 overflow-hidden">
+                <div class="p-3 border-b border-outline-variant/50 flex justify-between items-center">
                   <span class="font-semibold text-on-surface text-sm">Notifications</span>
                   <button onclick="markAllRead()" class="text-xs text-primary hover:underline">Mark all read</button>
                 </div>
                 <div class="max-h-64 overflow-y-auto custom-scrollbar">
                   {% for notif in notifications %}
-                  <div class="p-3 border-b border-outline-variant/50 hover:bg-surface-variant/30 transition-colors {% if not notif.is_read %}bg-primary-container/5{% endif %}">
+                  <div class="p-3 border-b border-outline-variant/30 hover:bg-surface-variant/30 transition-colors {% if not notif.is_read %}bg-primary-container/5{% endif %}">
                     <p class="text-sm text-on-surface font-medium">{{ notif.title }}</p>
                     <p class="text-xs text-on-surface-variant mt-0.5">{{ notif.message|truncatechars:60 }}</p>
                     <p class="text-xs text-outline mt-1">{{ notif.created_at|timesince }} ago</p>
@@ -213,7 +261,7 @@
               <span class="material-symbols-outlined">settings</span>
             </a>
             <!-- Create Trip btn -->
-            <a href="{% url 'ai_planner' %}" class="bg-primary text-on-primary px-4 py-1.5 rounded-full text-sm font-bold hover:brightness-110 active:scale-95 transition-all whitespace-nowrap">
+            <a href="{% url 'ai_planner' %}" class="bg-primary text-on-primary px-4 py-1.5 rounded-lg text-sm font-bold hover:brightness-110 active:scale-95 transition-all whitespace-nowrap">
               + New Trip
             </a>
             <!-- Avatar -->
@@ -232,16 +280,21 @@
       <main class="flex-1 overflow-y-auto custom-scrollbar">
         <!-- Django Messages -->
         {% if messages %}
-        <div class="px-6 pt-4 space-y-2">
+        <div id="django-messages" class="px-6 pt-4 space-y-2">
           {% for message in messages %}
-          <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
+          <div class="django-message-item transition-all duration-500 flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium
             {% if message.tags == 'error' %}bg-error-container/30 text-error border border-error/20
             {% elif message.tags == 'success' %}bg-primary-container/30 text-primary border border-primary/20
             {% else %}bg-surface-container text-on-surface border border-outline-variant{% endif %}">
-            <span class="material-symbols-outlined text-[18px]">
-              {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}check_circle{% else %}info{% endif %}
-            </span>
-            {{ message }}
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-[18px]">
+                {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}check_circle{% else %}info{% endif %}
+              </span>
+              <span>{{ message }}</span>
+            </div>
+            <button onclick="this.closest('.django-message-item').remove()" class="text-xs opacity-70 hover:opacity-100 ml-4">
+              <span class="material-symbols-outlined text-[16px]">close</span>
+            </button>
           </div>
           {% endfor %}
         </div>
@@ -251,12 +304,12 @@
       </main>
     </div>
 
-    <!-- ── AI Chatbot FAB ─────────────────────────────────────────────────── -->
+    <!-- ── Travel Assistant FAB ─────────────────────────────────────────────── -->
     {% if request.resolver_match.url_name != 'chatbot' %}
-    <a href="{% url 'chatbot' %}" class="fixed bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center group hover:scale-110 active:scale-95 transition-all z-50 pulse-ai" title="Ask TripMate AI">
-      <span class="material-symbols-outlined text-2xl">smart_toy</span>
+    <a href="{% url 'chatbot' %}" class="fixed bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-xl flex items-center justify-center group hover:scale-110 active:scale-95 transition-all z-50" title="Travel Assistant">
+      <span class="material-symbols-outlined text-2xl">chat</span>
       <div class="absolute bottom-full right-0 mb-3 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all pointer-events-none">
-        <div class="glass-card px-3 py-1.5 rounded-lg whitespace-nowrap text-xs font-medium text-on-surface">Ask TripMate AI</div>
+        <div class="bg-surface-container-high border border-outline-variant/50 px-3 py-1.5 rounded-lg whitespace-nowrap text-xs font-medium text-on-surface shadow-lg">Travel Assistant</div>
       </div>
     </a>
     {% endif %}
@@ -265,6 +318,16 @@
     <div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2 pointer-events-none"></div>
 
     <script>
+      // ── Auto-Dismiss Messages ──────────────────────────────────────────────
+      setTimeout(() => {
+        const msgItems = document.querySelectorAll('.django-message-item');
+        msgItems.forEach(el => {
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(-10px)';
+          setTimeout(() => el.remove(), 500);
+        });
+      }, 4000);
+
       // ── Toast System ──────────────────────────────────────────────────────
       function showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');
@@ -275,7 +338,7 @@
           info: 'bg-surface-container-high/90 text-on-surface border-outline-variant',
         };
         const icons = { success: 'check_circle', error: 'error', info: 'info' };
-        toast.className = `toast pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border glass-panel shadow-2xl text-sm font-medium max-w-sm ${colors[type] || colors.info}`;
+        toast.className = `toast pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg border bg-surface-container-high shadow-xl text-sm font-medium max-w-sm ${colors[type] || colors.info}`;
         toast.innerHTML = `<span class="material-symbols-outlined text-[18px]">${icons[type] || 'info'}</span><span>${message}</span>`;
         container.appendChild(toast);
         requestAnimationFrame(() => { setTimeout(() => toast.classList.add('show'), 10); });
@@ -329,6 +392,14 @@
           if (mainEl.scrollTop > 5) headerEl.classList.add('shadow-lg');
           else headerEl.classList.remove('shadow-lg');
         });
+      }
+
+      // ── Global Search → Google Maps ────────────────────────────────────────
+      function headerSearch() {
+        const q = document.getElementById('global-search').value.trim();
+        if (!q) return;
+        const url = `https://www.google.com/maps/search/${encodeURIComponent(q)}`;
+        window.open(url, '_blank', 'noopener');
       }
     </script>
     {% block extra_scripts %}{% endblock %}

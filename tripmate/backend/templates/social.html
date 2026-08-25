@@ -15,7 +15,7 @@
           <div class="flex-1">
             <div class="flex items-center justify-between gap-2">
               <h4 class="font-bold text-on-surface">{{ trip.source }} → {{ trip.destination }}</h4>
-              {% if trip.ai_generated %}<span class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full flex items-center gap-1"><span class="material-symbols-outlined text-[10px] mat-filled">auto_awesome</span>AI</span>{% endif %}
+              {% if trip.ai_generated %}<span class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full flex items-center gap-1"><span class="material-symbols-outlined text-[10px] mat-filled">auto_awesome</span>Smart</span>{% endif %}
             </div>
             <p class="text-xs text-on-surface-variant mt-0.5">By {{ trip.user.username }} · {{ trip.start_date|date:"M d" }} - {{ trip.end_date|date:"M d, Y" }} · {{ trip.num_travelers }} traveler{{ trip.num_travelers|pluralize }}</p>
             {% if trip.interests %}<div class="flex gap-1.5 flex-wrap mt-2">{% for i in trip.interests|slice:":3" %}<span class="px-2 py-0.5 bg-primary-container/20 text-primary text-xs rounded-full">{{ i }}</span>{% endfor %}</div>{% endif %}

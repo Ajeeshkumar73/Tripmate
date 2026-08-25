@@ -19,7 +19,7 @@
       </span>
       {% if trip.ai_generated %}
       <span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-primary/10 text-primary flex items-center gap-1">
-        <span class="material-symbols-outlined text-[12px] mat-filled">auto_awesome</span> AI Generated
+        <span class="material-symbols-outlined text-[12px] mat-filled">auto_awesome</span> Smart Generated
       </span>
       {% endif %}
       <a href="{% url 'trip_summary' trip.id %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all">Trip Summary</a>
@@ -58,11 +58,9 @@
     <div class="xl:col-span-2 space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="font-bold text-on-surface">Day-wise Itinerary</h3>
-        {% if not itinerary %}
         <button onclick="generateItinerary()" id="gen-btn" class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">
-          <span class="material-symbols-outlined text-[16px] mat-filled">auto_awesome</span> Generate AI Itinerary
+          <span class="material-symbols-outlined text-[16px] mat-filled">auto_awesome</span> {% if itinerary %}Regenerate Itinerary{% else %}Generate Itinerary{% endif %}
         </button>
-        {% endif %}
       </div>
 
       {% if itinerary %}
@@ -96,7 +94,7 @@
         <div class="glass-panel rounded-2xl p-12 text-center">
           <span class="material-symbols-outlined text-5xl text-outline mat-filled block mb-3">auto_awesome</span>
           <p class="font-semibold text-on-surface">No itinerary yet</p>
-          <p class="text-xs text-on-surface-variant mt-1">Generate a personalized AI itinerary for this trip</p>
+          <p class="text-xs text-on-surface-variant mt-1">Generate a personalized itinerary for this trip</p>
         </div>
       {% endif %}
 
@@ -184,7 +182,7 @@
     </div>
     <div>
       <p class="text-lg font-bold text-on-surface">Generating Itinerary...</p>
-      <p class="text-sm text-on-surface-variant mt-1">AI is crafting your perfect trip</p>
+      <p class="text-sm text-on-surface-variant mt-1">Crafting your perfect trip</p>
     </div>
   </div>
 </div>

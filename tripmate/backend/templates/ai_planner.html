@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
-{% block title %}AI Trip Planner{% endblock %}
+{% block title %}Trip Planner{% endblock %}
 
 {% block content %}
 <div class="px-6 py-6 space-y-6">
   <div class="flex items-center justify-between">
     <div>
-      <h2 class="text-2xl font-bold text-on-surface">AI Trip Planner</h2>
-      <p class="text-on-surface-variant text-sm mt-1">Generate a complete personalized itinerary with AI</p>
+      <h2 class="text-2xl font-bold text-on-surface">Trip Planner</h2>
+      <p class="text-on-surface-variant text-sm mt-1">Generate a complete personalized itinerary</p>
     </div>
     <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-container/20 border border-primary/20">
       <span class="material-symbols-outlined text-primary text-[16px] mat-filled">auto_awesome</span>
-      <span class="text-xs font-medium text-primary">Powered by Groq AI</span>
+      <span class="text-xs font-medium text-primary">Powered by TripMate</span>
     </div>
   </div>
 
@@ -106,7 +106,7 @@
 
         <button type="submit" id="generate-btn" class="w-full py-4 bg-primary text-on-primary rounded-2xl font-bold text-base flex items-center justify-center gap-3 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all">
           <span class="material-symbols-outlined mat-filled">auto_awesome</span>
-          <span id="btn-text">Generate AI Itinerary</span>
+          <span id="btn-text">Generate Itinerary</span>
         </button>
       </form>
     </div>
@@ -115,13 +115,13 @@
     <div class="space-y-4">
       <div class="glass-panel rounded-2xl p-5">
         <h4 class="font-bold text-on-surface mb-3 flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-[18px]">tips_and_updates</span> AI Planning Tips
+          <span class="material-symbols-outlined text-primary text-[18px]">tips_and_updates</span> Planning Tips
         </h4>
         <div class="space-y-3 text-sm">
           <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[16px] mt-0.5">check_circle</span><span>Be specific with your destination for better results</span></div>
           <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[16px] mt-0.5">check_circle</span><span>Select multiple interests for a diverse itinerary</span></div>
           <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[16px] mt-0.5">check_circle</span><span>Set a realistic budget for accurate cost estimates</span></div>
-          <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[16px] mt-0.5">check_circle</span><span>AI generates full day-wise plans with costs</span></div>
+          <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-primary text-[16px] mt-0.5">check_circle</span><span>Generates full day-wise plans with costs</span></div>
         </div>
       </div>
 
@@ -138,7 +138,7 @@
               <p class="text-xs text-on-surface-variant">{{ trip.start_date|date:"M d, Y" }}</p>
             </div>
             <span class="text-xs px-2 py-0.5 rounded-full {% if trip.ai_generated %}bg-primary-container/20 text-primary{% else %}bg-surface-variant text-on-surface-variant{% endif %}">
-              {% if trip.ai_generated %}AI{% else %}Manual{% endif %}
+              {% if trip.ai_generated %}Smart{% else %}Manual{% endif %}
             </span>
           </a>
           {% endfor %}
@@ -158,7 +158,7 @@
       </div>
       <div>
         <p class="text-xl font-bold text-on-surface">Generating Itinerary...</p>
-        <p class="text-sm text-on-surface-variant mt-2" id="loading-msg">AI is crafting your perfect trip</p>
+        <p class="text-sm text-on-surface-variant mt-2" id="loading-msg">Crafting your perfect trip</p>
       </div>
       <div class="w-full bg-surface-container rounded-full h-1.5">
         <div id="loading-bar" class="bg-primary h-1.5 rounded-full transition-all duration-1000" style="width:0%"></div>
@@ -239,7 +239,7 @@ document.getElementById('planner-form').addEventListener('submit', async (e) => 
     clearInterval(interval); clearInterval(progressInterval);
     bar.style.width = '100%';
 
-    if (!aiResp.ok) throw new Error('AI generation failed');
+    if (!aiResp.ok) throw new Error('Generation failed');
     const data = await aiResp.json();
 
     setTimeout(() => {
@@ -250,7 +250,7 @@ document.getElementById('planner-form').addEventListener('submit', async (e) => 
     clearInterval(interval); clearInterval(progressInterval);
     document.getElementById('loading-overlay').classList.add('hidden');
     document.getElementById('generate-btn').disabled = false;
-    showToast('AI generation failed. Please try again.', 'error');
+    showToast('Generation failed. Please try again.', 'error');
   }
 });
 
@@ -266,7 +266,7 @@ function renderItinerary(data, tripId, dest) {
     <div class="glass-panel rounded-2xl p-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <div>
-          <h3 class="text-xl font-bold text-on-surface">${data.title || 'Your AI Itinerary'}</h3>
+          <h3 class="text-xl font-bold text-on-surface">${data.title || 'Your Itinerary'}</h3>
           <p class="text-sm text-on-surface-variant mt-1">${data.overview || ''}</p>
         </div>
         <div class="flex gap-2">
@@ -333,7 +333,7 @@ function renderItinerary(data, tripId, dest) {
   }
 
   result.innerHTML = html;
-  showToast('AI itinerary generated successfully! 🎉', 'success');
+  showToast('Itinerary generated successfully! 🎉', 'success');
 }
 </script>
 {% endblock %}

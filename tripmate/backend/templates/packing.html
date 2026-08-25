@@ -3,10 +3,10 @@
 {% block content %}
 <div class="px-6 py-6 space-y-6">
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div><h2 class="text-2xl font-bold text-on-surface">Packing List</h2><p class="text-on-surface-variant text-sm mt-1">AI-powered smart packing checklist</p></div>
+    <div><h2 class="text-2xl font-bold text-on-surface">Packing List</h2><p class="text-on-surface-variant text-sm mt-1">Smart packing checklist</p></div>
     {% if selected_trip %}
     <button onclick="generatePacking()" id="gen-btn" class="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-xl font-semibold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/20">
-      <span class="material-symbols-outlined text-[18px] mat-filled">auto_awesome</span> Generate AI List
+      <span class="material-symbols-outlined text-[18px] mat-filled">auto_awesome</span> Generate Packing List
     </button>
     {% endif %}
   </div>
@@ -69,7 +69,7 @@
       <div class="glass-panel rounded-2xl p-12 text-center">
         <span class="material-symbols-outlined text-5xl text-outline mat-filled block mb-4">backpack</span>
         <p class="font-semibold text-on-surface">No packing list yet</p>
-        <p class="text-xs text-on-surface-variant mt-1">Generate a smart AI packing list for {{ selected_trip.destination }}</p>
+        <p class="text-xs text-on-surface-variant mt-1">Generate a smart packing list for {{ selected_trip.destination }}</p>
         <button onclick="generatePacking()" class="mt-4 px-5 py-2.5 bg-primary text-on-primary rounded-xl font-semibold text-sm hover:brightness-110 transition-all">
           <span class="material-symbols-outlined text-[16px] mat-filled">auto_awesome</span> Generate Now
         </button>
@@ -127,7 +127,7 @@ async function generatePacking() {
   btn.disabled = true; btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[16px]">refresh</span> Generating...';
   const resp = await fetch('/api/packing/{{ selected_trip.id }}/', { method:'POST', headers:{'X-CSRFToken':CSRF} });
   if (resp.ok) { showToast('Packing list generated!', 'success'); setTimeout(() => location.reload(), 800); }
-  else { showToast('Generation failed', 'error'); btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined">auto_awesome</span> Generate AI List'; }
+  else { showToast('Generation failed', 'error'); btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined">auto_awesome</span> Generate Packing List'; }
 }
 {% endif %}
 </script>

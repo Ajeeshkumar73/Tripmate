@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 
 from .models import (
-    Trip, Destination, Itinerary, Expense, Budget, Notification,
+    Trip, Destination, Itinerary, Activity, Expense, Budget, Notification,
     ChatHistory, PackingList, TravelDocument, TravelJournal,
     EmergencyContact, Review, Photo, UserProfile, Bookmark
 )
@@ -17,20 +17,23 @@ from .services.routing import get_route
 
 # ─── Landing Page ─────────────────────────────────────────────────────────────
 def landing_page(request):
-    # Handle review POST from authenticated users
-    if request.method == 'POST' and request.user.is_authenticated:
+    # Handle review POST from authenticated or guest users
+    if request.method == 'POST':
         title = request.POST.get('review_title', '').strip()
         content = request.POST.get('review_content', '').strip()
         rating = int(request.POST.get('review_rating', 5))
         if title and content and 1 <= rating <= 5:
+            user = request.user if request.user.is_authenticated else None
+            if not user:
+                user, _ = User.objects.get_or_create(username='Guest Traveler', defaults={'email': 'guest@tripmate.com'})
             Review.objects.create(
-                user=request.user,
+                user=user,
                 title=title,
                 content=content,
                 rating=rating,
                 is_public=True,
             )
-            messages.success(request, 'Your review has been posted! Thank you 🌟')
+            messages.success(request, 'Your review has been posted! Thank you')
         else:
             messages.error(request, 'Please fill in all review fields.')
         return redirect('Landing_page')
@@ -239,6 +242,75 @@ def trips_page(request):
 def trip_detail_page(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id, user=request.user)
     itinerary = getattr(trip, 'itinerary', None)
+
+    # Auto-generate itinerary if missing or has no days
+    if not itinerary or not itinerary.days_data:
+        try:
+            from .services import ai as ai_service
+            trip_data = {
+                'source': trip.source,
+                'destination': trip.destination,
+                'start_date': str(trip.start_date),
+                'end_date': str(trip.end_date),
+                'num_days': trip.duration_days,
+                'num_travelers': trip.num_travelers,
+                'budget': float(trip.budget),
+                'transport': trip.transport,
+                'travel_type': trip.travel_type,
+                'hotel_preference': trip.hotel_preference,
+                'food_preference': trip.food_preference,
+                'interests': trip.interests,
+            }
+            result = ai_service.generate_itinerary(trip_data)
+
+            itinerary, _ = Itinerary.objects.update_or_create(
+                trip=trip,
+                defaults={
+                    'raw_ai_response': json.dumps(result),
+                    'days_data': result.get('days', []),
+                    'total_estimated_cost': result.get('total_estimated_cost'),
+                    'travel_tips': result.get('travel_tips', []),
+                    'safety_tips': result.get('safety_tips', []),
+                    'eco_tips': result.get('eco_tips', []),
+                    'best_time_to_visit': result.get('best_time_to_visit', ''),
+                    'packing_list': {'essentials': result.get('packing_essentials', [])},
+                }
+            )
+
+            budget_data = result.get('budget_breakdown', {})
+            Budget.objects.update_or_create(
+                trip=trip,
+                defaults={
+                    'total_budget': trip.budget,
+                    'hotel_allocation': budget_data.get('hotel', 0),
+                    'food_allocation': budget_data.get('food', 0),
+                    'transport_allocation': budget_data.get('transport', 0),
+                    'tickets_allocation': budget_data.get('tickets', 0),
+                    'shopping_allocation': budget_data.get('shopping', 0),
+                    'misc_allocation': budget_data.get('misc', 0),
+                }
+            )
+
+            Activity.objects.filter(itinerary=itinerary).delete()
+            for day in result.get('days', []):
+                for act in day.get('activities', []):
+                    Activity.objects.create(
+                        itinerary=itinerary,
+                        day_number=day.get('day', 1),
+                        time_slot=act.get('time_slot', 'other'),
+                        name=act.get('name', ''),
+                        description=act.get('description', ''),
+                        location=act.get('location', ''),
+                        estimated_cost=act.get('estimated_cost'),
+                        duration_minutes=act.get('duration_minutes'),
+                        tips=act.get('tips', ''),
+                    )
+
+            trip.ai_generated = True
+            trip.save()
+        except Exception as e:
+            print(f"Auto itinerary error: {e}")
+
     expenses = Expense.objects.filter(trip=trip).order_by('-date')
     budget = getattr(trip, 'budget_plan', None)
     packing = getattr(trip, 'packing_list', None)

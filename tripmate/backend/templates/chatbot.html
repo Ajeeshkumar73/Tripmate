@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}AI Chatbot{% endblock %}
+{% block title %}Travel Assistant{% endblock %}
 
 {% block content %}
 <div class="flex flex-col h-[calc(100vh-56px)]">
@@ -10,7 +10,7 @@
         <span class="material-symbols-outlined text-primary text-2xl mat-filled">smart_toy</span>
       </div>
       <div>
-        <h2 class="font-bold text-on-surface">TripMate AI Assistant</h2>
+        <h2 class="font-bold text-on-surface">TripMate Assistant</h2>
         <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div><span class="text-xs text-on-surface-variant">Online · Ready to help</span></div>
       </div>
     </div>
@@ -48,7 +48,7 @@
         <span class="material-symbols-outlined text-primary text-[16px] mat-filled">smart_toy</span>
       </div>
       <div class="glass-card rounded-2xl rounded-tl-sm px-4 py-3 max-w-2xl">
-        <p class="text-sm text-on-surface">👋 Hello! I'm <strong>TripMate AI</strong>, your personal travel assistant. I can help you with:</p>
+        <p class="text-sm text-on-surface">👋 Hello! I'm <strong>TripMate Assistant</strong>, your personal travel assistant. I can help you with:</p>
         <ul class="mt-2 space-y-1 text-xs text-on-surface-variant">
           <li>🗺️ Destination information & itinerary planning</li>
           <li>🏨 Hotel & restaurant recommendations</li>
@@ -101,14 +101,25 @@
         <span class="material-symbols-outlined mat-filled">send</span>
       </button>
     </div>
-    <p class="text-xs text-outline mt-2 text-center">TripMate AI can make mistakes. Verify important travel information.</p>
+    <p class="text-xs text-outline mt-2 text-center">TripMate Assistant can make mistakes. Verify important travel information.</p>
+    {# Hidden form ensures Django sets the csrftoken cookie on this page #}
+    <form style="display:none">{% csrf_token %}</form>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+// Get CSRF token correctly from cookie
+function getCookie(name) {
+  let val = null;
+  document.cookie.split(';').forEach(c => {
+    c = c.trim();
+    if (c.startsWith(name + '=')) val = decodeURIComponent(c.slice(name.length + 1));
+  });
+  return val;
+}
+
 const messagesEl = document.getElementById('chat-messages');
 const inputEl = document.getElementById('chat-input');
 const typingEl = document.getElementById('typing-indicator');
@@ -124,17 +135,96 @@ inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKe
 function scrollDown() { messagesEl.scrollTop = messagesEl.scrollHeight; }
 scrollDown();
 
+// ── Format AI response text into clean readable HTML ─────────────────────
+function formatResponse(text) {
+  // Escape HTML first
+  let t = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Bold: **text** or *text*
+  t = t.replace(/\*\*(.+?)\*\*/g, '<strong class="text-primary font-semibold">$1</strong>');
+  t = t.replace(/\*(.+?)\*/g, '<strong class="text-primary font-semibold">$1</strong>');
+
+  const lines = t.split('\n');
+  let html = '';
+  let inList = false;
+  let inNumList = false;
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (inList) { html += '</ul>'; inList = false; }
+      if (inNumList) { html += '</ol>'; inNumList = false; }
+      return;
+    }
+
+    // Section headers: lines ending with : and short (like "Top Places:") or ### ##
+    if (/^#{1,3}\s/.test(trimmed)) {
+      if (inList) { html += '</ul>'; inList = false; }
+      if (inNumList) { html += '</ol>'; inNumList = false; }
+      const hText = trimmed.replace(/^#{1,3}\s/, '');
+      html += `<p class="text-primary font-bold text-sm mt-3 mb-1">${hText}</p>`;
+      return;
+    }
+    if (/^[A-Z][^.!?\n]{2,40}:$/.test(trimmed)) {
+      if (inList) { html += '</ul>'; inList = false; }
+      if (inNumList) { html += '</ol>'; inNumList = false; }
+      html += `<p class="text-primary font-bold text-xs uppercase tracking-wider mt-3 mb-1">${trimmed.slice(0,-1)}</p>`;
+      return;
+    }
+
+    // Numbered list: 1. 2. etc
+    if (/^\d+\.\s/.test(trimmed)) {
+      if (inList) { html += '</ul>'; inList = false; }
+      if (!inNumList) { html += '<ol class="space-y-1.5 my-2 ml-1">'; inNumList = true; }
+      const content = trimmed.replace(/^\d+\.\s/, '');
+      html += `<li class="flex gap-2 text-sm"><span class="text-primary font-bold min-w-[1.2rem]">${trimmed.match(/^\d+/)[0]}.</span><span>${content}</span></li>`;
+      return;
+    }
+
+    // Bullet list: • - * at start
+    if (/^[•\-\*]\s/.test(trimmed)) {
+      if (inNumList) { html += '</ol>'; inNumList = false; }
+      if (!inList) { html += '<ul class="space-y-1.5 my-2">'; inList = true; }
+      const content = trimmed.replace(/^[•\-\*]\s/, '');
+      html += `<li class="flex gap-2 text-sm items-start"><span class="text-primary mt-0.5">•</span><span>${content}</span></li>`;
+      return;
+    }
+
+    // Emoji bullet lines (🏛️ etc)
+    if (/^[\p{Emoji}]/u.test(trimmed) && !trimmed.includes(' ') === false) {
+      if (inNumList) { html += '</ol>'; inNumList = false; }
+      if (!inList) { html += '<ul class="space-y-1.5 my-2">'; inList = true; }
+      html += `<li class="flex gap-2 text-sm items-start"><span>${trimmed}</span></li>`;
+      return;
+    }
+
+    // Normal paragraph
+    if (inList) { html += '</ul>'; inList = false; }
+    if (inNumList) { html += '</ol>'; inNumList = false; }
+    html += `<p class="text-sm leading-relaxed">${trimmed}</p>`;
+  });
+
+  if (inList) html += '</ul>';
+  if (inNumList) html += '</ol>';
+  return html;
+}
+
 function appendMessage(role, text, animate = false) {
   const isUser = role === 'user';
   const div = document.createElement('div');
   div.className = `flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''} ${animate ? 'opacity-0 translate-y-4' : ''}`;
   div.style.transition = 'all 0.3s ease';
+
+  const contentHtml = isUser
+    ? `<p class="text-sm text-on-primary">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>`
+    : `<div class="chat-ai-response space-y-1.5">${formatResponse(text)}</div>`;
+
   div.innerHTML = `
     <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-primary text-on-primary' : 'bg-primary-container/40'}">
       <span class="material-symbols-outlined text-[16px] mat-filled">${isUser ? 'person' : 'smart_toy'}</span>
     </div>
-    <div class="${isUser ? 'bg-primary text-on-primary' : 'glass-card'} rounded-2xl ${isUser ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-4 py-3 max-w-2xl">
-      <p class="text-sm ${isUser ? 'text-on-primary' : 'text-on-surface'} whitespace-pre-wrap">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+    <div class="${isUser ? 'bg-primary text-on-primary' : 'glass-card'} rounded-2xl ${isUser ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-4 py-3 max-w-2xl min-w-0">
+      ${contentHtml}
     </div>`;
   messagesEl.appendChild(div);
   if (animate) requestAnimationFrame(() => { setTimeout(() => { div.classList.remove('opacity-0','translate-y-4'); }, 10); });
@@ -145,6 +235,7 @@ async function sendMessage() {
   const msg = inputEl.value.trim();
   if (!msg) return;
   const tripId = document.getElementById('trip-ctx')?.value || null;
+  const csrfToken = getCookie('csrftoken');
 
   appendMessage('user', msg, true);
   inputEl.value = ''; inputEl.style.height = 'auto';
@@ -155,26 +246,36 @@ async function sendMessage() {
   try {
     const resp = await fetch('/api/ai/chat/', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken || ''
+      },
       body: JSON.stringify({message: msg, trip_id: tripId})
     });
     const data = await resp.json();
     typingEl.classList.add('hidden');
-    appendMessage('assistant', data.response || 'Sorry, I could not respond.', true);
+    if (resp.ok) {
+      appendMessage('assistant', data.response || 'Sorry, I could not respond.', true);
+    } else {
+      appendMessage('assistant', 'Error: ' + (data.error || 'Could not get response. Please try again.'), true);
+    }
   } catch(e) {
     typingEl.classList.add('hidden');
-    appendMessage('assistant', 'I'm having trouble connecting. Please try again.', true);
-  } finally { sendBtn.disabled = false; }
+    appendMessage('assistant', 'I am having trouble connecting. Please try again.', true);
+  } finally {
+    sendBtn.disabled = false;
+  }
 }
 
 function sendQuick(msg) { inputEl.value = msg; sendMessage(); }
 
 async function clearChat() {
   if (!confirm('Clear chat history?')) return;
-  await fetch('/api/ai/chat/', { method: 'DELETE', headers: {'X-CSRFToken':CSRF} });
+  const csrfToken = getCookie('csrftoken');
+  await fetch('/api/ai/chat/', { method: 'DELETE', headers: {'X-CSRFToken': csrfToken || ''} });
   const msgs = messagesEl.querySelectorAll('.flex.items-start');
   msgs.forEach((m, i) => { if (i > 0) m.remove(); });
-  showToast('Chat history cleared.', 'info');
+  if (typeof showToast === 'function') showToast('Chat history cleared.', 'info');
 }
 </script>
 {% endblock %}

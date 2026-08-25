@@ -132,7 +132,7 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # ─── External API Keys ──────────────────────────────────────────────────────
-GROQ_API_KEY = os.getenv('GROQ_API', '')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '') or os.getenv('GROQ_API', '')
 ORS_API_KEY = os.getenv('ORS_API_KEY', '')
 
 # ─── Email Settings ─────────────────────────────────────────────────────────

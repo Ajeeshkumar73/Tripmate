@@ -3,40 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login – TripMate AI</title>
+  <title>Login – TripMate</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0..1&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * { font-family: 'Inter', sans-serif; }
     body { background: #051426; }
-    .glass { background: rgba(18,32,51,0.8); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.06); }
+    .auth-card {
+      background: rgba(28, 43, 62, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.25s ease;
+    }
+    .auth-card:hover {
+      border-color: rgba(149, 211, 186, 0.35);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 20px rgba(149, 211, 186, 0.12);
+    }
+    input {
+      color-scheme: dark;
+      border: 1px solid rgba(255, 255, 255, 0.18) !important;
+      background-color: #0d1c2f !important;
+      transition: all 0.2s ease !important;
+    }
+    input:hover {
+      border-color: rgba(149, 211, 186, 0.45) !important;
+    }
+    input:focus {
+      border-color: #95d3ba !important;
+      box-shadow: 0 0 0 3px rgba(149, 211, 186, 0.25) !important;
+      outline: none !important;
+    }
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; }
     .mat-filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
-    input { color-scheme: dark; }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
-  <!-- Background -->
-  <div class="absolute inset-0"><div class="absolute top-1/3 left-1/4 w-96 h-96 bg-[#95d3ba]/5 rounded-full blur-3xl"></div><div class="absolute bottom-1/4 right-1/3 w-80 h-80 bg-[#bec6e0]/5 rounded-full blur-3xl"></div></div>
-
-  <div class="w-full max-w-md relative z-10">
+<body class="min-h-screen flex items-center justify-center px-4">
+  <div class="w-full max-w-md">
     <!-- Logo -->
     <div class="text-center mb-8">
       <a href="/" class="inline-flex items-center gap-3">
         <span class="material-symbols-outlined text-[#95d3ba] text-4xl mat-filled">travel_explore</span>
-        <span class="text-2xl font-black text-white">TripMate AI</span>
+        <span class="text-2xl font-black text-white">TripMate</span>
       </a>
-      <p class="text-[#89938d] text-sm mt-2">Welcome back, traveler! 👋</p>
+      <p class="text-[#89938d] text-sm mt-2">Welcome back</p>
     </div>
 
-    <div class="glass rounded-3xl p-8">
+    <div class="auth-card rounded-xl p-8">
       <h2 class="text-2xl font-bold text-white mb-6">Sign In</h2>
 
       {% if messages %}
         {% for message in messages %}
-        <div class="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium {% if message.tags == 'error' %}bg-red-900/30 text-red-400 border border-red-500/20{% else %}bg-[#95d3ba]/10 text-[#95d3ba] border border-[#95d3ba]/20{% endif %}">
-          <span class="material-symbols-outlined text-[16px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span> {{ message }}
+        <div class="django-message-item mb-4 flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all duration-500 {% if message.tags == 'error' %}bg-red-900/30 text-red-400 border border-red-500/20{% else %}bg-[#95d3ba]/10 text-[#95d3ba] border border-[#95d3ba]/20{% endif %}">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[16px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
+            <span>{{ message }}</span>
+          </div>
+          <button onclick="this.closest('.django-message-item').remove()" class="text-xs opacity-70 hover:opacity-100 ml-3">
+            <span class="material-symbols-outlined text-[16px]">close</span>
+          </button>
         </div>
         {% endfor %}
       {% endif %}
@@ -47,7 +73,7 @@
           <label class="block text-xs font-semibold text-[#89938d] uppercase tracking-wider mb-2">Email Address</label>
           <div class="relative">
             <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#89938d] text-[18px]">mail</span>
-            <input type="email" name="email" required placeholder="your@email.com" class="w-full bg-[#0d1c2f] border border-[#404944] rounded-xl pl-10 pr-4 py-3.5 text-[#d5e3fd] placeholder:text-[#404944] text-sm focus:border-[#95d3ba] focus:ring-1 focus:ring-[#95d3ba] outline-none transition-all" />
+            <input type="email" name="email" required placeholder="your@email.com" class="w-full bg-[#0d1c2f] border border-[#404944] rounded-lg pl-10 pr-4 py-3.5 text-[#d5e3fd] placeholder:text-[#404944] text-sm focus:border-[#95d3ba] focus:ring-1 focus:ring-[#95d3ba] outline-none transition-all" />
           </div>
         </div>
         <div>
@@ -56,14 +82,23 @@
           </div>
           <div class="relative">
             <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#89938d] text-[18px]">lock</span>
-            <input type="password" id="password" name="password" required placeholder="Your password" class="w-full bg-[#0d1c2f] border border-[#404944] rounded-xl pl-10 pr-11 py-3.5 text-[#d5e3fd] placeholder:text-[#404944] text-sm focus:border-[#95d3ba] focus:ring-1 focus:ring-[#95d3ba] outline-none transition-all" />
+            <input type="password" id="password" name="password" required placeholder="Your password" class="w-full bg-[#0d1c2f] border border-[#404944] rounded-lg pl-10 pr-11 py-3.5 text-[#d5e3fd] placeholder:text-[#404944] text-sm focus:border-[#95d3ba] focus:ring-1 focus:ring-[#95d3ba] outline-none transition-all" />
             <button type="button" onclick="document.getElementById('password').type === 'password' ? document.getElementById('password').type = 'text' : document.getElementById('password').type = 'password'" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#89938d] hover:text-[#d5e3fd]"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
           </div>
         </div>
-        <button type="submit" class="w-full py-4 bg-[#95d3ba] text-[#003829] rounded-xl font-bold text-base hover:shadow-2xl hover:shadow-[#95d3ba]/20 hover:-translate-y-0.5 active:scale-95 transition-all">Sign In →</button>
+        <button type="submit" class="w-full py-3.5 bg-[#95d3ba] text-[#003829] rounded-lg font-bold text-base hover:brightness-110 active:scale-95 transition-all">Sign In →</button>
       </form>
       <p class="text-center text-sm text-[#89938d] mt-6">Don't have an account? <a href="{% url 'register_page' %}" class="text-[#95d3ba] font-semibold hover:underline">Create one free</a></p>
     </div>
   </div>
+  <script>
+    setTimeout(() => {
+      document.querySelectorAll('.django-message-item').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-10px)';
+        setTimeout(() => el.remove(), 500);
+      });
+    }, 4000);
+  </script>
 </body>
 </html>
