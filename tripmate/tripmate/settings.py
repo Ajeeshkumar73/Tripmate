@@ -131,6 +131,14 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
+# ─── CSRF ───────────────────────────────────────────────────────────────────
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+
 # ─── External API Keys ──────────────────────────────────────────────────────
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '') or os.getenv('GROQ_API', '')
 ORS_API_KEY = os.getenv('ORS_API_KEY', '')

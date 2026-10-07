@@ -7,16 +7,37 @@ logger = logging.getLogger(__name__)
 
 # Primary & Fallback Groq models
 GROQ_MODELS = [
-    "groq/compound",
-    "openai/gpt-oss-20b",
-    "qwen/qwen3.6-27b",
     "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
+    "mixtral-8x7b-32768",
 ]
 
-SYSTEM_PROMPT = """You are TripMate AI, an expert travel planning assistant. 
-You help users plan amazing trips with detailed, practical, and personalized recommendations.
-Be concise, helpful, and enthusiastic about travel."""
+SYSTEM_PROMPT = """You are TripMate Assistant, a friendly and expert travel guide. Your job is to give clear, well-organized, clean, and easy-to-understand answers — even a person who has never traveled before should fully understand your response.
+
+STRICT FORMATTING & STYLE RULES (always follow these):
+1. DO NOT use any emojis anywhere in your response (no emojis at all). Keep the text completely clean, plain, and professional.
+2. ALWAYS start with a one-sentence direct answer to the question.
+3. Use clear section headings ending with a colon (e.g. "Top Places to Visit:", "Budget Tips:", "What You Need:").
+4. Under each heading, use bullet points (•) with short, simple sentences. One idea per bullet. Max 2 lines per bullet.
+5. Use everyday simple English. Avoid travel jargon or technical words. If you must use one, explain it in brackets.
+6. End every response with a short "Quick Tip:" that gives one most important piece of advice.
+7. Keep total response under 350 words. Be specific, not vague.
+8. Never use markdown formatting like **, ##, or ---. Use plain text with the heading format shown above.
+9. If a question has multiple parts, answer each part in its own clearly labeled section.
+10. Numbers, costs, and durations make answers much more useful — always include them when possible.
+
+EXAMPLE FORMAT:
+[One clear, direct answer sentence.]
+
+Best Places to Visit:
+• Red Fort, Delhi — India's most iconic historical monument. Entry ₹35 for Indians.
+• Marine Drive, Mumbai — A beautiful 3.6 km seafront road. Free to walk anytime.
+
+Budget Estimate:
+• Food: ₹300–600 per day at local restaurants
+• Hotel: ₹800–2000 per night for a decent stay
+
+Quick Tip: Book train tickets at least 2 weeks in advance to get the best prices on IRCTC."""
 
 
 def get_groq_client():
@@ -44,7 +65,7 @@ def _call_groq(messages: list, temperature: float = 0.7, max_tokens: int = 2048,
                 "temperature": temperature,
                 "max_tokens": max_tokens,
             }
-            if json_mode and "groq/compound" not in model_name:
+            if json_mode:
                 kwargs["response_format"] = {"type": "json_object"}
 
             response = client.chat.completions.create(**kwargs)
@@ -333,11 +354,11 @@ def chat_response(message: str, history: list, trip_context: dict = None) -> str
     msg_lower = message.lower()
 
     if 'place' in msg_lower or 'visit' in msg_lower or 'attraction' in msg_lower or 'see' in msg_lower:
-        return f"Top recommended places to visit in {dest}:\n\n1. 🏛️ Historic City Center & Heritage Monuments\n2. 🌄 Scenic Viewpoints & Natural Landmarks\n3. 🛍️ Cultural Night Markets & Local Bazaars\n4. 🎨 Museums & Local Art Galleries\n5. 🍲 Famous Food Streets & Local Eateries"
+        return f"Top recommended places to visit in {dest}:\n\n1. Historic City Center & Heritage Monuments\n2. Scenic Viewpoints & Natural Landmarks\n3. Cultural Night Markets & Local Bazaars\n4. Museums & Local Art Galleries\n5. Famous Food Streets & Local Eateries"
     elif 'pack' in msg_lower or 'cloth' in msg_lower or 'bag' in msg_lower:
-        return f"Packing Essentials for {dest}:\n\n• 👟 Comfortable walking shoes & versatile clothing\n• 📄 Passports, IDs & digital copies of bookings\n• 🔋 Universal travel adapter & high-capacity power bank\n• 🧴 Sunscreen, personal medication & toiletries\n• ☂️ Weather-appropriate outerwear"
+        return f"Packing Essentials for {dest}:\n\n• Comfortable walking shoes & versatile clothing\n• Passports, IDs & digital copies of bookings\n• Universal travel adapter & high-capacity power bank\n• Sunscreen, personal medication & toiletries\n• Weather-appropriate outerwear"
     elif 'hotel' in msg_lower or 'stay' in msg_lower or 'food' in msg_lower or 'restaurant' in msg_lower:
-        return f"Stay & Food Recommendations in {dest}:\n\n• 🏨 Choose stays near city transit hubs for easy access.\n• 🍽️ Try top-rated regional bistros and food markets.\n• 🏡 Boutique homestays and heritage hotels offer authentic local experiences."
+        return f"Stay & Food Recommendations in {dest}:\n\n• Choose stays near city transit hubs for easy access.\n• Try top-rated regional bistros and food markets.\n• Boutique homestays and heritage hotels offer authentic local experiences."
     elif 'visa' in msg_lower or 'doc' in msg_lower:
         return "Visa & Travel Guidance:\n\n• Ensure passport is valid for at least 6 months.\n• Check e-Visa or Visa on Arrival eligibility for your destination.\n• Keep travel insurance and return flight confirmations handy."
     else:

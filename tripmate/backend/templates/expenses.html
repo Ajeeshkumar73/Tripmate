@@ -22,9 +22,9 @@
   </div>
 
   <!-- Summary Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 {% if selected_trip %}lg:grid-cols-4{% else %}lg:grid-cols-3{% endif %} gap-4">
     <div class="glass-panel p-5 rounded-2xl">
-      <div class="flex items-center gap-3 mb-2">
+      <div class="flex items-center gap-3 mb-1">
         <div class="w-10 h-10 bg-error-container/20 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-error mat-filled">payments</span></div>
         <div>
           <p class="text-xs text-on-surface-variant uppercase tracking-wider">Total Spent</p>
@@ -32,17 +32,42 @@
         </div>
       </div>
     </div>
+    {% if selected_trip %}
     <div class="glass-panel p-5 rounded-2xl">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="w-10 h-10 bg-primary-container/30 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-primary mat-filled">receipt_long</span></div>
+      <div class="flex items-center gap-3 mb-1">
+        <div class="w-10 h-10 bg-primary-container/30 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-primary mat-filled">account_balance_wallet</span></div>
+        <div>
+          <p class="text-xs text-on-surface-variant uppercase tracking-wider">Plan Budget</p>
+          <p class="text-2xl font-bold text-on-surface">₹{{ selected_trip.budget|floatformat:0 }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="glass-panel p-5 rounded-2xl">
+      <div class="flex items-center gap-3 mb-1">
+        <div class="w-10 h-10 {% if selected_trip.budget_plan.remaining_budget < 0 %}bg-error-container/20{% else %}bg-emerald-500/20{% endif %} rounded-xl flex items-center justify-center">
+          <span class="material-symbols-outlined {% if selected_trip.budget_plan.remaining_budget < 0 %}text-error{% else %}text-emerald-400{% endif %} mat-filled">savings</span>
+        </div>
+        <div>
+          <p class="text-xs text-on-surface-variant uppercase tracking-wider">Remaining</p>
+          <p class="text-2xl font-bold {% if selected_trip.budget_plan.remaining_budget < 0 %}text-error{% else %}text-emerald-400{% endif %}">
+            ₹{{ selected_trip.budget_plan.remaining_budget|floatformat:0 }}
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="glass-panel p-5 rounded-2xl">
+      <div class="flex items-center gap-3 mb-1">
+        <div class="w-10 h-10 bg-tertiary-container/30 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-tertiary mat-filled">receipt_long</span></div>
         <div>
           <p class="text-xs text-on-surface-variant uppercase tracking-wider">Transactions</p>
           <p class="text-2xl font-bold text-on-surface">{{ expenses|length }}</p>
         </div>
       </div>
     </div>
+    {% if not selected_trip %}
     <div class="glass-panel p-5 rounded-2xl" id="top-category-card">
-      <div class="flex items-center gap-3 mb-2">
+      <div class="flex items-center gap-3 mb-1">
         <div class="w-10 h-10 bg-tertiary-container/40 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-tertiary mat-filled">category</span></div>
         <div>
           <p class="text-xs text-on-surface-variant uppercase tracking-wider">Top Category</p>
@@ -50,6 +75,7 @@
         </div>
       </div>
     </div>
+    {% endif %}
   </div>
 
   <!-- Charts + Expense List -->

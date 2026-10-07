@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}Chat with {{ other_user.username }}{% endblock %}
+{% block extra_head %}
+<style>
+  #chat-box { scroll-behavior: smooth; }
+  .msg-bubble { max-width: 75%; animation: msgIn 0.2s ease; }
+  @keyframes msgIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  .msg-mine { background: linear-gradient(135deg, #95d3ba, #64b9a0); color: #003829; }
+  .msg-theirs { background: rgba(28, 43, 62, 0.95); color: #d5e3fd; border: 1px solid rgba(255,255,255,0.12); }
+  #msg-input:focus { border-color: #95d3ba; box-shadow: 0 0 0 3px rgba(149,211,186,0.2); }
+  .typing-dot { animation: bounce 1.2s infinite; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0);} 30%{transform:translateY(-6px);} }
+  .online-dot { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.3); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="flex flex-col h-full max-w-4xl mx-auto">
+
+  <!-- Chat Header -->
+  <div class="glass-panel mx-4 mt-4 rounded-2xl px-5 py-4 flex items-center gap-4 flex-shrink-0 border border-outline-variant/30">
+    <a href="{% url 'community_members' %}" class="text-on-surface-variant hover:text-primary transition-colors mr-1">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </a>
+    <div class="w-11 h-11 rounded-full bg-primary-container/30 flex items-center justify-center overflow-hidden border-2 border-primary-container/60 relative flex-shrink-0">
+      {% if other_user.profile.avatar %}
+        <img src="{{ other_user.profile.avatar.url }}" class="w-full h-full object-cover" />
+      {% else %}
+        <span class="material-symbols-outlined text-primary text-[22px]">person</span>
+      {% endif %}
+      <span class="online-dot absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface-container-high"></span>
+    </div>
+    <div class="flex-1">
+      <h3 class="font-bold text-on-surface">{{ other_user.get_full_name|default:other_user.username }}</h3>
+      <p class="text-xs text-on-surface-variant flex items-center gap-1.5">
+        @{{ other_user.username }}
+        {% if other_user.profile.nationality %}
+        · <span class="material-symbols-outlined text-[11px]">public</span> {{ other_user.profile.nationality }}
+        {% endif %}
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'social' %}" class="flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-primary bg-surface-container-low border border-outline-variant/30 px-3 py-1.5 rounded-lg transition-all">
+        <span class="material-symbols-outlined text-[15px]">forum</span> Community
+      </a>
+    </div>
+  </div>
+
+  <!-- Messages area -->
+  <div id="chat-box" class="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-3 min-h-0">
+    <!-- Existing messages (SSR) -->
+    {% for msg in messages_qs %}
+    <div class="flex {% if msg.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
+      {% if msg.sender != request.user %}
+      <div class="w-8 h-8 rounded-full bg-primary-container/30 flex items-center justify-center flex-shrink-0 mr-2 overflow-hidden self-end">
+        {% if other_user.profile.avatar %}
+          <img src="{{ other_user.profile.avatar.url }}" class="w-full h-full object-cover" />
+        {% else %}
+          <span class="material-symbols-outlined text-primary text-[14px]">person</span>
+        {% endif %}
+      </div>
+      {% endif %}
+      <div class="msg-bubble {% if msg.sender == request.user %}msg-mine{% else %}msg-theirs{% endif %} rounded-2xl {% if msg.sender == request.user %}rounded-br-sm{% else %}rounded-bl-sm{% endif %} px-4 py-2.5">
+        <p class="text-sm leading-relaxed">{{ msg.content }}</p>
+        <p class="text-[10px] opacity-60 mt-1 {% if msg.sender == request.user %}text-right{% endif %}">{{ msg.created_at|time:"H:i" }}</p>
+      </div>
+    </div>
+    {% empty %}
+    <div class="flex flex-col items-center justify-center py-16 text-center gap-3" id="empty-state">
+      <div class="w-16 h-16 rounded-full bg-primary-container/20 flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary text-3xl mat-filled">chat_bubble</span>
+      </div>
+      <div>
+        <p class="font-semibold text-on-surface">Start a conversation</p>
+        <p class="text-sm text-on-surface-variant mt-0.5">Say hello to {{ other_user.get_full_name|default:other_user.username }}!</p>
+      </div>
+    </div>
+    {% endfor %}
+    <!-- New messages injected by JS below -->
+    <div id="new-messages"></div>
+  </div>
+
+  <!-- Input area -->
+  <div class="glass-panel mx-4 mb-4 rounded-2xl p-3 flex items-end gap-3 flex-shrink-0 border border-outline-variant/30">
+    <div class="flex-1 relative">
+      <textarea id="msg-input" rows="1" placeholder="Type a message..." class="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant resize-none focus:outline-none transition-all max-h-32 overflow-y-auto custom-scrollbar" onkeydown="handleEnter(event)" oninput="autoResize(this)"></textarea>
+    </div>
+    <button id="send-btn" onclick="sendMessage()" class="bg-primary text-on-primary w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 hover:brightness-110 active:scale-95 transition-all shadow-lg">
+      <span class="material-symbols-outlined text-[20px] mat-filled">send</span>
+    </button>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const OTHER_USER_ID = {{ other_user.id }};
+const MY_USERNAME = '{{ request.user.username }}';
+let lastMsgId = {{ messages_qs.last.id|default:0 }};
+let polling = null;
+
+// ── Auto-scroll to bottom on load ─────────────────────────────────────────────
+const chatBox = document.getElementById('chat-box');
+chatBox.scrollTop = chatBox.scrollHeight;
+
+// ── Send message ─────────────────────────────────────────────────────────────
+function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const content = input.value.trim();
+  if (!content) return;
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  fetch(`/api/community/messages/${OTHER_USER_ID}/send/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  })
+  .then(r => r.json())
+  .then(msg => {
+    appendMessage(msg);
+    input.value = '';
+    input.style.height = 'auto';
+    lastMsgId = Math.max(lastMsgId, msg.id);
+    document.getElementById('empty-state')?.remove();
+  })
+  .finally(() => { btn.disabled = false; });
+}
+
+// ── Append a message bubble ───────────────────────────────────────────────────
+function appendMessage(msg) {
+  const container = document.getElementById('new-messages');
+  const wrapper = document.createElement('div');
+  wrapper.className = `flex ${msg.is_mine ? 'justify-end' : 'justify-start'} mb-1`;
+
+  const avatarHtml = !msg.is_mine ? `
+    <div class="w-8 h-8 rounded-full bg-primary-container/30 flex items-center justify-center flex-shrink-0 mr-2 overflow-hidden self-end">
+      <span class="material-symbols-outlined text-primary text-[14px]">person</span>
+    </div>` : '';
+
+  wrapper.innerHTML = `${avatarHtml}
+    <div class="msg-bubble ${msg.is_mine ? 'msg-mine' : 'msg-theirs'} rounded-2xl ${msg.is_mine ? 'rounded-br-sm' : 'rounded-bl-sm'} px-4 py-2.5">
+      <p class="text-sm leading-relaxed">${escapeHtml(msg.content)}</p>
+      <p class="text-[10px] opacity-60 mt-1 ${msg.is_mine ? 'text-right' : ''}">${msg.created_at}</p>
+    </div>`;
+  container.appendChild(wrapper);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Polling ───────────────────────────────────────────────────────────────────
+function pollMessages() {
+  fetch(`/api/community/messages/${OTHER_USER_ID}/?since=${lastMsgId}`)
+  .then(r => r.json())
+  .then(data => {
+    data.messages.forEach(msg => {
+      if (!msg.is_mine) { // only append received messages (sent ones already appended)
+        appendMessage(msg);
+        document.getElementById('empty-state')?.remove();
+      }
+      lastMsgId = Math.max(lastMsgId, msg.id);
+    });
+  })
+  .catch(() => {});
+}
+
+// Start polling every 3 seconds
+polling = setInterval(pollMessages, 3000);
+
+// ── Enter key handling ────────────────────────────────────────────────────────
+function handleEnter(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+// ── Auto-resize textarea ──────────────────────────────────────────────────────
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+}
+
+// ── Cleanup on page leave ─────────────────────────────────────────────────────
+window.addEventListener('beforeunload', () => { if (polling) clearInterval(polling); });
+</script>
+{% endblock %}

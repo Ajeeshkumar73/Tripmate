@@ -15,7 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import (
     Trip, Destination, Itinerary, Activity, Budget, Expense,
     ChatHistory, Notification, Bookmark, PackingList,
-    TravelDocument, TravelJournal, EmergencyContact, Review, Photo, UserProfile
+    TravelDocument, TravelJournal, EmergencyContact, Review, Photo, UserProfile, sync_trip_budget
 )
 from .serializers import (
     RegisterSerializer, TripSerializer, TripListSerializer,
@@ -375,9 +375,9 @@ class BudgetAPIView(APIView):
     def get(self, request, trip_id):
         try:
             trip = Trip.objects.get(id=trip_id, user=request.user)
-            budget = Budget.objects.get(trip=trip)
+            budget = sync_trip_budget(trip)
             return Response(BudgetSerializer(budget).data)
-        except (Trip.DoesNotExist, Budget.DoesNotExist):
+        except Trip.DoesNotExist:
             return Response({"error": "Budget not found."}, status=404)
 
     def post(self, request, trip_id):
@@ -387,7 +387,14 @@ class BudgetAPIView(APIView):
             return Response({"error": "Trip not found."}, status=404)
 
         data = request.data
-        budget_obj = total = float(data.get('total_budget', trip.budget))
+        try:
+            total = float(data.get('total_budget', trip.budget))
+        except (ValueError, TypeError):
+            total = float(trip.budget)
+
+        # Update Trip model budget as well
+        trip.budget = total
+        trip.save(update_fields=['budget'])
 
         # AI budget suggestions
         suggestions = ai_service.get_budget_suggestions(
@@ -398,15 +405,16 @@ class BudgetAPIView(APIView):
             trip=trip,
             defaults={
                 'total_budget': total,
-                'hotel_allocation': data.get('hotel', total * 0.35),
-                'food_allocation': data.get('food', total * 0.25),
-                'transport_allocation': data.get('transport', total * 0.15),
-                'tickets_allocation': data.get('tickets', total * 0.10),
-                'shopping_allocation': data.get('shopping', total * 0.10),
-                'misc_allocation': data.get('misc', total * 0.05),
+                'hotel_allocation': float(data.get('hotel', total * 0.35)),
+                'food_allocation': float(data.get('food', total * 0.25)),
+                'transport_allocation': float(data.get('transport', total * 0.15)),
+                'tickets_allocation': float(data.get('tickets', total * 0.10)),
+                'shopping_allocation': float(data.get('shopping', total * 0.10)),
+                'misc_allocation': float(data.get('misc', total * 0.05)),
                 'ai_suggestions': suggestions,
             }
         )
+        sync_trip_budget(trip)
         return Response(BudgetSerializer(budget).data)
 
 

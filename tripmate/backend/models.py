@@ -194,12 +194,40 @@ class Budget(models.Model):
 
     @property
     def remaining_budget(self):
-        return self.total_budget - self.total_spent
+        return float(self.total_budget or 0) - float(self.total_spent or 0)
 
     @property
     def daily_budget(self):
         days = self.trip.duration_days
-        return self.total_budget / days if days else self.total_budget
+        budget = float(self.total_budget or 0)
+        return budget / days if days else budget
+
+
+# ─── Helper to Sync Trip Budget ──────────────────────────────────────────────
+def sync_trip_budget(trip):
+    if not trip:
+        return None
+    from decimal import Decimal
+    from django.db.models import Sum
+
+    budget_plan = getattr(trip, 'budget_plan', None)
+    if not budget_plan:
+        total = trip.budget or Decimal('0.00')
+        budget_plan = Budget.objects.create(
+            trip=trip,
+            total_budget=total,
+            hotel_allocation=total * Decimal('0.35'),
+            food_allocation=total * Decimal('0.25'),
+            transport_allocation=total * Decimal('0.15'),
+            tickets_allocation=total * Decimal('0.10'),
+            shopping_allocation=total * Decimal('0.10'),
+            misc_allocation=total * Decimal('0.05'),
+        )
+
+    spent = trip.expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    budget_plan.total_spent = spent
+    budget_plan.save(update_fields=['total_spent', 'updated_at'])
+    return budget_plan
 
 
 # ─── Expense ─────────────────────────────────────────────────────────────────
@@ -227,6 +255,17 @@ class Expense(models.Model):
 
     class Meta:
         ordering = ['-date', '-created_at']
+
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Expense)
+@receiver(post_delete, sender=Expense)
+def _on_expense_change_sync_budget(sender, instance, **kwargs):
+    if instance.trip:
+        sync_trip_budget(instance.trip)
+
 
 
 # ─── Weather Cache ────────────────────────────────────────────────────────────
@@ -416,3 +455,69 @@ class EmergencyContact(models.Model):
 
     class Meta:
         ordering = ['-is_primary', 'name']
+
+
+# ─── Community Post ───────────────────────────────────────────────────────────
+class CommunityPost(models.Model):
+    POST_TYPE_CHOICES = [
+        ('text', 'Text'), ('photo', 'Photo'),
+        ('experience', 'Experience'), ('review', 'Review'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_posts')
+    content = models.TextField()
+    image = models.ImageField(upload_to='community_posts/', null=True, blank=True)
+    post_type = models.CharField(max_length=20, choices=POST_TYPE_CHOICES, default='text')
+    location = models.CharField(max_length=200, blank=True)
+    likes_count = models.PositiveIntegerField(default=0)
+    comments_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username}: {self.content[:50]}"
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+# ─── Post Like ────────────────────────────────────────────────────────────────
+class PostLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_likes')
+    post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'post']
+
+    def __str__(self):
+        return f"{self.user.username} liked post #{self.post.id}"
+
+
+# ─── Post Comment ─────────────────────────────────────────────────────────────
+class PostComment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_comments')
+    post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='comments')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} on post #{self.post.id}: {self.content[:40]}"
+
+    class Meta:
+        ordering = ['created_at']
+
+
+# ─── Direct Message ───────────────────────────────────────────────────────────
+class DirectMessage(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    content = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender.username} → {self.receiver.username}: {self.content[:40]}"
+
+    class Meta:
+        ordering = ['created_at']

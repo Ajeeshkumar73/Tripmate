@@ -8,6 +8,9 @@ urlpatterns = [
     path('', views.landing_page, name='Landing_page'),
     path('login/', views.login_page, name='Login_page'),
     path('register/', views.register_page, name='register_page'),
+    path('forgot-password/', views.forgot_password_page, name='forgot_password'),
+    path('verify-otp/', views.verify_otp_page, name='verify_otp'),
+    path('reset-password/', views.reset_password_page, name='reset_password'),
     path('logout/', views.logout_view, name='Logout'),
     path('userpage/', views.user_dashboard, name='user_page'),
     path('trips/', views.trips_page, name='trips_page'),
@@ -26,7 +29,17 @@ urlpatterns = [
     path('emergency/', views.emergency_page, name='emergency'),
     path('profile/', views.profile_page, name='profile'),
     path('social/', views.social_page, name='social'),
+    path('community/members/', views.community_members_page, name='community_members'),
+    path('community/chat/<int:user_id>/', views.community_chat_page, name='community_chat'),
     path('admin-dashboard/', views.admin_dashboard_page, name='admin_dashboard'),
+
+    # ── API: Community ────────────────────────────────────────────────────────
+    path('api/community/posts/', views.api_community_posts, name='api_community_posts'),
+    path('api/community/posts/<int:post_id>/like/', views.api_like_post, name='api_like_post'),
+    path('api/community/posts/<int:post_id>/comments/', views.api_post_comments, name='api_post_comments'),
+    path('api/community/messages/<int:user_id>/', views.api_get_messages, name='api_get_messages'),
+    path('api/community/messages/<int:user_id>/send/', views.api_send_message, name='api_send_message'),
+
 
     # ── API: Auth ────────────────────────────────────────────────────────────
     path('api/auth/register/', api_views.RegisterAPIView.as_view(), name='api_register'),
